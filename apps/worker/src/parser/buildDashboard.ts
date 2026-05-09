@@ -17,6 +17,7 @@ export function buildDashboard(outputDir: string): ParsedMatchMetadata {
   const itemBuilds = buildItemTimings(combat);
   const tickTime = buildTickTimeIndex(combat);
   const abilityBuilds = skillEvents.length > 0 ? buildExactSkillBuilds(skillEvents, tickTime) : buildObservedAbilityBuilds(combat);
+  const timeline = buildTimeline(combat);
 
   const radiantPlayers = scoreboard.filter((row: any) => row.team === 2);
   const direPlayers = scoreboard.filter((row: any) => row.team === 3);
@@ -33,6 +34,7 @@ export function buildDashboard(outputDir: string): ParsedMatchMetadata {
     finalInventory,
     itemBuilds,
     abilityBuilds,
+    timeline,
     teamTotals,
     match: {
       matchId,
@@ -143,6 +145,71 @@ function buildItemTimings(events: any[]): Record<string, any[]> {
     purchases.sort((a, b) => a.time - b.time);
   }
   return byHero;
+}
+
+function buildTimeline(events: any[]): any[] {
+  const timeline: any[] = [];
+
+  for (const event of events) {
+    if (event.type === "DOTA_COMBATLOG_DEATH" && event.targetHero) {
+      const damageSource = String(event.damageSourceName || "");
+      if (!event.attackerHero && !damageSource.startsWith("npc_dota_hero_")) {
+        continue;
+      }
+      const killer = event.attackerHero ? String(event.attackerName || "") : damageSource;
+      const victim = String(event.targetName || "");
+      timeline.push({
+        type: "kill",
+        tick: event.tick,
+        time: gameTime(event.timestamp),
+        team: event.attackerTeam ?? null,
+        title: `${displayHero(killer)} killed ${displayHero(victim)}`,
+        killer,
+        victim,
+        assists: Array.isArray(event.assistPlayers) ? event.assistPlayers : [],
+        ability: event.inflictorName || event.valueName || null
+      });
+      continue;
+    }
+
+    if (event.type === "DOTA_COMBATLOG_FIRST_BLOOD") {
+      timeline.push({
+        type: "first_blood",
+        tick: event.tick,
+        time: gameTime(event.timestamp),
+        team: event.attackerTeam ?? null,
+        title: "First Blood"
+      });
+      continue;
+    }
+
+    if (event.type === "DOTA_COMBATLOG_TEAM_BUILDING_KILL" && event.targetName) {
+      timeline.push({
+        type: "objective",
+        tick: event.tick,
+        time: gameTime(event.timestamp),
+        team: event.attackerTeam ?? null,
+        title: `${teamName(event.attackerTeam)} destroyed ${displayBuilding(event.targetName)}`,
+        target: event.targetName
+      });
+      continue;
+    }
+
+    if (event.type === "DOTA_COMBATLOG_BUYBACK" && event.valueName && event.valueName !== "dota_unknown") {
+      timeline.push({
+        type: "buyback",
+        tick: event.tick,
+        time: gameTime(event.timestamp),
+        team: null,
+        title: `${displayHero(event.valueName)} bought back`,
+        hero: event.valueName
+      });
+    }
+  }
+
+  return timeline
+    .filter((event) => Number.isFinite(event.time))
+    .sort((a, b) => a.time - b.time || Number(a.tick || 0) - Number(b.tick || 0));
 }
 
 function buildObservedAbilityBuilds(events: any[]): Record<string, any[]> {
@@ -285,10 +352,30 @@ function teamTotal(name: string, team: number, players: any[]) {
   };
 }
 
+function teamName(team: number | null | undefined): string {
+  return team === 2 ? "Radiant" : team === 3 ? "Dire" : "Unknown";
+}
+
 function displayHero(hero: string): string {
   return String(hero || "")
     .replace(/^npc_dota_hero_/, "")
     .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function displayBuilding(building: string): string {
+  return String(building || "")
+    .replace(/^npc_dota_/, "")
+    .replace(/^goodguys_/, "Radiant ")
+    .replace(/^badguys_/, "Dire ")
+    .replace(/_/g, " ")
+    .replace(/\btower(\d)\b/i, "Tower $1")
+    .replace(/\bmelee rax\b/i, "Melee Barracks")
+    .replace(/\brange rax\b/i, "Ranged Barracks")
+    .replace(/\bfort\b/i, "Ancient")
+    .split(" ")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");

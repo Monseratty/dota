@@ -557,6 +557,67 @@ main {
   color: #ffc2c2;
 }
 
+.timelinePanel {
+  margin-top: 16px;
+}
+
+.timelineList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: #19222c;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 52px 82px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px 12px;
+  background: #0b1016;
+  border-left: 3px solid #334354;
+}
+
+.timelineItem.radiant {
+  border-left-color: #2f8f5c;
+}
+
+.timelineItem.dire {
+  border-left-color: #9a4a4a;
+}
+
+.timelineItem time,
+.timelineItem span {
+  color: #8c99a7;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineItem span {
+  display: inline-flex;
+  justify-content: center;
+  min-height: 22px;
+  padding: 3px 6px;
+  border: 1px solid #263343;
+  border-radius: 4px;
+  background: #111821;
+  color: #a8b3bf;
+}
+
+.timelineItem.first_blood span {
+  border-color: #d7a64d;
+  color: #f0ca76;
+}
+
+.timelineItem strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
 .teamColumns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -809,6 +870,7 @@ main {
   .pathGrid,
   .matchHero,
   .jobSummary,
+  .timelineList,
   .teamColumns {
     grid-template-columns: 1fr;
   }

@@ -197,20 +197,51 @@ function DashboardView({ dashboard }: { dashboard: any }) {
   }));
 
   return (
-    <section className="teamColumns">
-      {teams.map((group) => (
-        <div className={`panel teamPanel ${group.team === 2 ? "radiant" : "dire"}`} key={group.team}>
-          <div className="panelHead">
-            <h2>{group.name}</h2>
-            <span>{group.total ? `${group.total.kills}/${group.total.deaths}/${group.total.assists} · ${formatNumber(group.total.gold)} gold` : `${group.players.length} players`}</span>
+    <>
+      <TimelinePanel events={dashboard.timeline || []} />
+      <section className="teamColumns">
+        {teams.map((group) => (
+          <div className={`panel teamPanel ${group.team === 2 ? "radiant" : "dire"}`} key={group.team}>
+            <div className="panelHead">
+              <h2>{group.name}</h2>
+              <span>{group.total ? `${group.total.kills}/${group.total.deaths}/${group.total.assists} · ${formatNumber(group.total.gold)} gold` : `${group.players.length} players`}</span>
+            </div>
+            <div className="playerCards">
+              {group.players.map((player: any) => (
+                <PlayerCard key={`${player.index}-${player.hero}`} player={player} inventory={inventoryByHero.get(player.hero)} />
+              ))}
+            </div>
           </div>
-          <div className="playerCards">
-            {group.players.map((player: any) => (
-              <PlayerCard key={`${player.index}-${player.hero}`} player={player} inventory={inventoryByHero.get(player.hero)} />
-            ))}
+        ))}
+      </section>
+    </>
+  );
+}
+
+function TimelinePanel({ events }: { events: any[] }) {
+  const important = events
+    .filter((event) => event.type !== "kill" || event.time <= 900 || event.time >= 1800)
+    .slice(0, 28);
+
+  if (important.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="panel timelinePanel">
+      <div className="panelHead">
+        <h2>Timeline</h2>
+        <span>{important.length} key events</span>
+      </div>
+      <div className="timelineList">
+        {important.map((event, index) => (
+          <div className={`timelineItem ${event.type} ${event.team === 2 ? "radiant" : event.team === 3 ? "dire" : ""}`} key={`${event.tick}-${event.type}-${index}`}>
+            <time>{formatGameTime(event.time)}</time>
+            <span>{eventLabel(event.type)}</span>
+            <strong>{event.title}</strong>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }
@@ -330,6 +361,16 @@ function itemAsset(itemKey: string): string {
 
 function abilityAsset(abilityKey: string): string {
   return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityKey}.png`;
+}
+
+function eventLabel(type: string): string {
+  const labels: Record<string, string> = {
+    buyback: "Buyback",
+    first_blood: "First blood",
+    kill: "Kill",
+    objective: "Objective"
+  };
+  return labels[type] || type;
 }
 
 function scoreText(match: MatchListItem): string {
