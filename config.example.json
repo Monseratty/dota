@@ -1,0 +1,16 @@
+{
+  "storagePath": "./storage",
+  "inboxPath": "./storage/inbox",
+  "rawDemoPath": "./storage/demos/raw",
+  "parsedPath": "./storage/parsed",
+  "failedPath": "./storage/failed",
+  "parserLogPath": "./storage/logs/parser",
+  "databasePath": "./data/app.db",
+  "scanIntervalSeconds": 10,
+  "fileStableCheckSeconds": 5,
+  "parserConcurrency": 1,
+  "keepRawDemos": true,
+  "autoDeleteRawAfterDays": null,
+  "apiPort": 4300,
+  "webPort": 5173
+}

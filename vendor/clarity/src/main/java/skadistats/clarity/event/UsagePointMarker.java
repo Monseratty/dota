@@ -1,0 +1,14 @@
+package skadistats.clarity.event;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = {ElementType.ANNOTATION_TYPE})
+public @interface UsagePointMarker {
+    UsagePointType value();
+    Class[] parameterClasses() default {};
+    boolean dynamicParameters() default false;
+}
