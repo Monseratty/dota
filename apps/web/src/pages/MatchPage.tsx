@@ -221,7 +221,7 @@ function DashboardView({ dashboard }: { dashboard: any }) {
 function TimelinePanel({ events }: { events: any[] }) {
   const important = events
     .filter((event) => event.type !== "kill" || event.time <= 900 || event.time >= 1800)
-    .slice(0, 28);
+    .slice(0, 14);
 
   if (important.length === 0) {
     return null;
