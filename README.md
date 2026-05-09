@@ -50,6 +50,24 @@ Open:
 http://localhost:5173
 ```
 
+Or use the single-command dev runner:
+
+```bash
+npm run dev:local
+```
+
+For LAN access from another computer:
+
+```bash
+npm run dev:lan
+```
+
+Before debugging a new machine, run:
+
+```bash
+npm run doctor
+```
+
 ## Change Local Paths
 
 Edit `config.json`.
@@ -93,11 +111,17 @@ Put `.dem` files into the configured `inboxPath`, then click `Rescan folder` in 
 
 If you want to open the site from another computer on the same network, run the web app with an API base that points to the host machine.
 
-PowerShell example:
+PowerShell example if you run the web process manually:
 
 ```powershell
 $env:VITE_API_BASE = "http://192.168.0.12:4300"
 npm --workspace apps/web run dev -- --host 0.0.0.0
+```
+
+The easier option is:
+
+```powershell
+npm run dev:lan
 ```
 
 Then open:

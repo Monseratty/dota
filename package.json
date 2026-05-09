@@ -10,9 +10,12 @@
   "scripts": {
     "dev": "npm run dev:api & npm run dev:web",
     "dev:all": "npm run dev:api & npm run dev:worker & npm run dev:web",
+    "dev:local": "node scripts/dev-all.mjs",
+    "dev:lan": "node scripts/dev-all.mjs --lan",
     "dev:api": "npm --workspace apps/api run dev",
     "dev:web": "npm --workspace apps/web run dev",
     "dev:worker": "npm --workspace apps/worker run dev",
+    "doctor": "node scripts/doctor.mjs",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
