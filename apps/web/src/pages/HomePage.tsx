@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, ExternalLink, Loader2, RefreshCw, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArchiveX, Download, ExternalLink, Loader2, RefreshCw, RotateCcw, Search, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { deleteMatch, downloadUrl, getMatches, getStorageInfo, reparseMatch, rescanFolder, type MatchListItem, type StorageInfo } from "../api/client";
+import { deleteMatch, deleteRawReplay, downloadUrl, getMatches, getStorageInfo, reparseMatch, rescanFolder, type MatchListItem, type StorageInfo } from "../api/client";
 
 export function HomePage() {
   const [storage, setStorage] = useState<StorageInfo | null>(null);
@@ -81,6 +81,11 @@ export function HomePage() {
 
   async function handleReparse(match: MatchListItem) {
     await reparseMatch(match.id);
+    await refresh();
+  }
+
+  async function handleDeleteRaw(match: MatchListItem) {
+    await deleteRawReplay(match.id);
     await refresh();
   }
 
@@ -177,6 +182,11 @@ export function HomePage() {
                 {match.hasRawDemo ? (
                   <button className="iconButton" onClick={() => handleReparse(match)} title="Reparse match">
                     <RotateCcw size={16} />
+                  </button>
+                ) : null}
+                {match.hasRawDemo ? (
+                  <button className="iconButton" onClick={() => handleDeleteRaw(match)} title="Remove raw replay only">
+                    <ArchiveX size={16} />
                   </button>
                 ) : null}
                 <button className="iconButton danger" onClick={() => handleDelete(match)} title="Delete match">

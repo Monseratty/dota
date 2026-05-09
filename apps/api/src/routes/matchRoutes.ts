@@ -74,6 +74,20 @@ export function registerMatchRoutes(
     return { ok: true, jobId };
   });
 
+  app.delete<{ Params: { id: string } }>("/api/matches/:id/raw", async (request, reply) => {
+    const match = matches.findById(Number(request.params.id));
+    if (!match) {
+      return reply.code(404).send({ error: "Match not found" });
+    }
+    if (!match.rawFilePath || !match.hasRawDemo) {
+      return reply.code(404).send({ error: "Raw replay is already missing" });
+    }
+
+    storage.deleteRawFile(match.rawFilePath);
+    matches.markRawDeleted(match.id, "manual");
+    return { ok: true };
+  });
+
   app.get<{ Params: { id: string } }>("/api/matches/:id/download", async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match?.rawFilePath) {

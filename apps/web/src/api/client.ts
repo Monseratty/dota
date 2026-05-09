@@ -82,6 +82,10 @@ export async function reparseMatch(id: number): Promise<void> {
   await request(`/api/matches/${id}/reparse`, { method: "POST" });
 }
 
+export async function deleteRawReplay(id: number): Promise<void> {
+  await request(`/api/matches/${id}/raw`, { method: "DELETE" });
+}
+
 export function downloadUrl(path: string): string {
   return `${API_BASE}${path}`;
 }

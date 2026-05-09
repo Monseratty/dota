@@ -107,6 +107,27 @@ Windows absolute path example:
 
 Put `.dem` files into the configured `inboxPath`, then click `Rescan folder` in the UI or wait for the scanner.
 
+## Raw Replay Lifecycle
+
+Parsed match data stays available even if the original `.dem` file is removed.
+
+In the UI:
+
+- `Download replay` downloads the raw `.dem` while it exists.
+- `Remove raw` deletes only the raw `.dem` and keeps the match dashboard.
+- `Delete match` deletes the match record, parsed JSON, and raw `.dem`.
+
+For automatic cleanup, edit `config.json`:
+
+```json
+{
+  "keepRawDemos": false,
+  "autoDeleteRawAfterDays": 7
+}
+```
+
+With this setting, the API periodically removes raw `.dem` files for ready matches older than the configured number of days.
+
 ## Local Network Access
 
 If you want to open the site from another computer on the same network, run the web app with an API base that points to the host machine.

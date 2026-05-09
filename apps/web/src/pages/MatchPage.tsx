@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Download, RefreshCw, RotateCcw } from "lucide-react";
+import { ArchiveX, Download, RefreshCw, RotateCcw } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { downloadUrl, getDashboard, getMatchDetails, reparseMatch, type MatchListItem, type ParseJob } from "../api/client";
+import { deleteRawReplay, downloadUrl, getDashboard, getMatchDetails, reparseMatch, type MatchListItem, type ParseJob } from "../api/client";
 
 export function MatchPage() {
   const { id } = useParams();
@@ -53,6 +53,12 @@ export function MatchPage() {
     await loadMatch(id);
   }
 
+  async function handleDeleteRaw() {
+    if (!id || !match) return;
+    await deleteRawReplay(match.id);
+    await loadMatch(id);
+  }
+
   if (error) {
     return (
       <div className="page">
@@ -95,6 +101,12 @@ export function MatchPage() {
             <button className="ghostButton" onClick={handleReparse} disabled={reparsing || match.status === "queued" || match.status === "parsing"}>
               <RotateCcw className={reparsing ? "spin" : ""} size={17} />
               {reparsing || match.status === "queued" || match.status === "parsing" ? "Reparsing" : "Reparse"}
+            </button>
+          ) : null}
+          {match.hasRawDemo ? (
+            <button className="ghostButton" onClick={handleDeleteRaw}>
+              <ArchiveX size={17} />
+              Remove raw
             </button>
           ) : null}
           <Link className="ghostButton" to="/matches">Back</Link>

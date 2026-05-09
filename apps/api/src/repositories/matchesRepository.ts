@@ -37,6 +37,37 @@ export class MatchesRepository {
     return rows.map((row) => withRuntimeStatus(row, this.hasDashboard));
   }
 
+  listRawCleanupCandidates(olderThan: Date) {
+    const rows = this.db.prepare(`
+      SELECT
+        id,
+        match_id AS matchId,
+        source_filename AS sourceFilename,
+        raw_file_path AS rawFilePath,
+        file_size AS fileSize,
+        duration,
+        radiant_score AS radiantScore,
+        dire_score AS direScore,
+        winner,
+        status,
+        discovered_at AS discoveredAt,
+        queued_at AS queuedAt,
+        parsed_at AS parsedAt,
+        error_message AS errorMessage,
+        raw_deleted_at AS rawDeletedAt,
+        raw_delete_reason AS rawDeleteReason
+      FROM matches
+      WHERE status = 'ready'
+        AND raw_file_path IS NOT NULL
+        AND raw_deleted_at IS NULL
+        AND parsed_at IS NOT NULL
+        AND parsed_at < ?
+      ORDER BY parsed_at ASC
+    `).all(olderThan.toISOString());
+
+    return rows.map((row) => withRuntimeStatus(row, this.hasDashboard)).filter((row) => row.hasRawDemo);
+  }
+
   findById(id: number) {
     const row = this.db.prepare(`
       SELECT
@@ -104,6 +135,15 @@ export class MatchesRepository {
       SET status = 'queued', queued_at = ?, parsed_at = NULL, error_message = NULL, updated_at = ?
       WHERE id = ?
     `).run(now, now, id);
+  }
+
+  markRawDeleted(id: number, reason: string): void {
+    const now = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE matches
+      SET raw_deleted_at = ?, raw_delete_reason = ?, updated_at = ?
+      WHERE id = ?
+    `).run(now, reason, now, id);
   }
 }
 
