@@ -630,6 +630,330 @@ main {
   color: #ffc2c2;
 }
 
+.matchOverviewPanel {
+  margin-top: 20px;
+  border-color: #222d38;
+  background: #080b0f;
+}
+
+.overviewHead {
+  min-height: 64px;
+  background:
+    linear-gradient(90deg, rgba(47, 149, 97, 0.08), rgba(15, 21, 28, 0.96) 42%, rgba(168, 74, 74, 0.08)),
+    #0e141a;
+}
+
+.overviewHead > div:first-child {
+  min-width: 0;
+}
+
+.overviewHead h2 {
+  font-size: 20px;
+}
+
+.overviewLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #0b1016;
+  color: #a9b4c0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.legendItem.winner {
+  border-color: rgba(55, 183, 105, 0.45);
+  color: #9df2b7;
+  background: rgba(47, 149, 97, 0.11);
+}
+
+.legendItem.loser {
+  border-color: rgba(209, 81, 81, 0.42);
+  color: #ffadad;
+  background: rgba(168, 74, 74, 0.11);
+}
+
+.overviewTableWrap {
+  overflow-x: auto;
+  background: #05080c;
+}
+
+.overviewTable {
+  min-width: 1160px;
+}
+
+.overviewRow {
+  display: grid;
+  grid-template-columns: 86px minmax(190px, 1.15fr) 92px 54px 138px 96px 86px 258px;
+  gap: 12px;
+  align-items: center;
+  min-height: 58px;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(27, 38, 50, 0.82);
+  background: #0a0e13;
+}
+
+.overviewHeader {
+  min-height: 42px;
+  color: #8b98a6;
+  background: #11171d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.overviewTeamGroup {
+  background: #05080c;
+}
+
+.overviewTeamBar {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(27, 38, 50, 0.82);
+}
+
+.overviewTeamBar.winner {
+  background:
+    linear-gradient(90deg, rgba(42, 143, 86, 0.36), rgba(10, 14, 19, 0.96) 62%),
+    #0a0f12;
+  box-shadow: inset 3px 0 0 #3ecb76;
+}
+
+.overviewTeamBar.loser {
+  background:
+    linear-gradient(90deg, rgba(154, 57, 57, 0.33), rgba(10, 14, 19, 0.96) 62%),
+    #0d0c0d;
+  box-shadow: inset 3px 0 0 #d15151;
+}
+
+.overviewTeamBar strong {
+  display: block;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.overviewTeamBar span {
+  display: block;
+  margin-top: 2px;
+  color: #9aa6b3;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.overviewTeamBar.winner span {
+  color: #9df2b7;
+}
+
+.overviewTeamBar.loser span {
+  color: #ffadad;
+}
+
+.overviewTeamBar b {
+  color: var(--gold-soft);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.playerOverviewRow.winner {
+  background:
+    linear-gradient(90deg, rgba(42, 143, 86, 0.12), rgba(10, 14, 19, 0.96) 22%),
+    #0a0e13;
+}
+
+.playerOverviewRow.loser {
+  background:
+    linear-gradient(90deg, rgba(154, 57, 57, 0.11), rgba(10, 14, 19, 0.96) 22%),
+    #0a0e13;
+}
+
+.overviewHero {
+  position: relative;
+  width: 78px;
+  height: 44px;
+}
+
+.overviewHero img {
+  width: 78px;
+  height: 44px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  background: #111821;
+}
+
+.overviewHero span {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(232, 239, 248, 0.2);
+  border-radius: 50%;
+  background: #111821;
+  color: #e8eff8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.overviewPlayer,
+.overviewGold {
+  min-width: 0;
+}
+
+.overviewPlayer strong,
+.overviewPlayer span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overviewPlayer strong {
+  color: #f1f5fb;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.overviewPlayer span {
+  display: block;
+  margin-top: 2px;
+  color: #8793a1;
+  font-size: 12px;
+}
+
+.overviewKda {
+  color: #eef4fb;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.overviewLevel,
+.overviewCreeps,
+.overviewNet {
+  color: #c2ccd7;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.overviewGold strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #f1cf76;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.overviewGold span {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #202b35;
+}
+
+.overviewGold i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d0a04b, #f0d77d);
+  box-shadow: 0 0 14px rgba(240, 215, 125, 0.18);
+}
+
+.overviewInventory {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.overviewMainSlots,
+.overviewExtraSlots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.overviewExtraSlots {
+  padding-left: 8px;
+  border-left: 1px solid rgba(34, 48, 65, 0.86);
+}
+
+.overviewItemSlot {
+  width: 28px;
+  height: 21px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #1e2a36;
+  border-radius: 3px;
+  background: #111821;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+}
+
+.overviewItemSlot.muted {
+  opacity: 0.68;
+}
+
+.overviewItemSlot.special {
+  border-color: #34465a;
+  opacity: 0.92;
+}
+
+.overviewItemSlot.empty {
+  opacity: 0.42;
+  background:
+    linear-gradient(135deg, transparent 49%, rgba(255, 255, 255, 0.025) 50%, transparent 51%),
+    #0d1218;
+}
+
+.overviewItemSlot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overviewTotal {
+  min-height: 44px;
+  color: #c5cfda;
+  background: #11171d;
+  font-weight: 800;
+}
+
+.overviewTotal.winner {
+  background: rgba(47, 149, 97, 0.13);
+}
+
+.overviewTotal.loser {
+  background: rgba(168, 74, 74, 0.13);
+}
+
+.compactBuilds {
+  margin-top: 16px;
+}
+
 .timelinePanel {
   margin-top: 18px;
 }

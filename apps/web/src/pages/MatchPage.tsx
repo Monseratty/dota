@@ -167,7 +167,7 @@ export function MatchPage() {
         </section>
       ) : null}
 
-      {dashboard ? <DashboardView dashboard={dashboard} /> : (
+      {dashboard ? <DashboardView dashboard={dashboard} match={match} /> : (
         <section className="panel">
           <div className="panelHead">
             <h2>Dashboard data</h2>
@@ -182,33 +182,92 @@ export function MatchPage() {
   );
 }
 
-function DashboardView({ dashboard }: { dashboard: any }) {
-  const inventoryByHero = new Map((dashboard.finalInventory || []).map((row: any) => [row.hero, row]));
+function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListItem }) {
+  const inventoryByHero = buildInventoryByHero(dashboard.finalInventory || []);
   const players = (dashboard.players || []).map((player: any) => ({
     ...player,
+    inventory: inventoryByHero.get(player.hero),
     itemBuild: dashboard.itemBuilds?.[player.hero] || [],
     abilityBuild: dashboard.abilityBuilds?.[player.hero] || []
   }));
+  const winnerTeam = winnerToTeam(match.winner || dashboard.match?.winner);
   const teams = [2, 3].map((team) => ({
     team,
     name: team === 2 ? "Radiant" : "Dire",
+    result: winnerTeam === team ? "winner" : winnerTeam ? "loser" : "unknown",
     total: (dashboard.teamTotals || []).find((total: any) => total.team === team),
     players: players.filter((player: any) => player.team === team)
   }));
+  const maxGold = Math.max(1, ...players.map((player: any) => Number(player.gold) || 0));
 
   return (
     <>
+      <section className="panel matchOverviewPanel">
+        <div className="panelHead overviewHead">
+          <div>
+            <h2>Противостояние</h2>
+            <span>{scoreText(match)} · {match.winner ? `${match.winner} victory` : "winner unknown"}</span>
+          </div>
+          <div className="overviewLegend">
+            <span className="legendItem winner">Победители</span>
+            <span className="legendItem loser">Проигравшие</span>
+          </div>
+        </div>
+        <div className="overviewTableWrap">
+          <div className="overviewTable">
+            <div className="overviewRow overviewHeader">
+              <span>Герой</span>
+              <span>Игрок</span>
+              <span>У / С / П</span>
+              <span>Ур</span>
+              <span>Золото</span>
+              <span>Доб / Deny</span>
+              <span>Net</span>
+              <span>Инвентарь</span>
+            </div>
+            {teams.map((group) => (
+              <div className="overviewTeamGroup" key={group.team}>
+                <div className={`overviewTeamBar ${group.name.toLowerCase()} ${group.result}`}>
+                  <div>
+                    <strong>{group.name}</strong>
+                    <span>{group.result === "winner" ? "Победа" : group.result === "loser" ? "Поражение" : "Итог неизвестен"}</span>
+                  </div>
+                  <b>{group.total ? `${group.total.kills} / ${group.total.deaths} / ${group.total.assists}` : `${group.players.length} players`}</b>
+                </div>
+                {group.players.map((player: any) => (
+                  <OverviewPlayerRow
+                    key={`${player.index}-${player.hero}`}
+                    player={player}
+                    result={group.result}
+                    maxGold={maxGold}
+                  />
+                ))}
+                <div className={`overviewRow overviewTotal ${group.result}`}>
+                  <span></span>
+                  <strong>{group.name} total</strong>
+                  <span>{group.total ? `${group.total.kills} / ${group.total.deaths} / ${group.total.assists}` : "-"}</span>
+                  <span></span>
+                  <span>{group.total ? formatCompactNumber(group.total.gold) : "-"}</span>
+                  <span>{group.total ? `${group.total.lastHits} / ${group.total.denies}` : "-"}</span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       <TimelinePanel events={dashboard.timeline || []} />
-      <section className="teamColumns">
+      <section className="teamColumns compactBuilds">
         {teams.map((group) => (
           <div className={`panel teamPanel ${group.team === 2 ? "radiant" : "dire"}`} key={group.team}>
             <div className="panelHead">
-              <h2>{group.name}</h2>
+              <h2>{group.name} builds</h2>
               <span>{group.total ? `${group.total.kills}/${group.total.deaths}/${group.total.assists} · ${formatNumber(group.total.gold)} gold` : `${group.players.length} players`}</span>
             </div>
             <div className="playerCards">
               {group.players.map((player: any) => (
-                <PlayerCard key={`${player.index}-${player.hero}`} player={player} inventory={inventoryByHero.get(player.hero)} />
+                <PlayerCard key={`${player.index}-${player.hero}`} player={player} inventory={player.inventory} />
               ))}
             </div>
           </div>
@@ -216,6 +275,97 @@ function DashboardView({ dashboard }: { dashboard: any }) {
       </section>
     </>
   );
+}
+
+function OverviewPlayerRow({ player, result, maxGold }: { player: any; result: string; maxGold: number }) {
+  const gold = Number(player.gold) || 0;
+  const goldPercent = Math.max(5, Math.min(100, (gold / maxGold) * 100));
+
+  return (
+    <div className={`overviewRow playerOverviewRow ${result}`}>
+      <div className="overviewHero">
+        <img src={heroAsset(player.heroKey)} alt="" onError={(event) => event.currentTarget.style.display = "none"} />
+        <span>{player.level ?? "-"}</span>
+      </div>
+      <div className="overviewPlayer">
+        <strong>
+          {player.displayName || player.name || player.heroName}
+          {player.isPro ? <i className="proBadge">PRO</i> : null}
+        </strong>
+        <span>{player.heroName}{player.isPro && player.proTeam ? ` · ${player.proTeam}` : ""}</span>
+      </div>
+      <b className="overviewKda">{player.kills ?? 0} / {player.deaths ?? 0} / {player.assists ?? 0}</b>
+      <span className="overviewLevel">{player.level ?? "-"}</span>
+      <div className="overviewGold">
+        <strong>{formatCompactNumber(gold)}</strong>
+        <span><i style={{ width: `${goldPercent}%` }} /></span>
+      </div>
+      <span className="overviewCreeps">{player.lastHits ?? 0} / {player.denies ?? 0}</span>
+      <span className="overviewNet">{formatNumber(gold)}</span>
+      <OverviewInventory inventory={player.inventory} />
+    </div>
+  );
+}
+
+function OverviewInventory({ inventory }: { inventory: any }) {
+  const main = fixedSlots(inventory?.main, 6, 0);
+  const backpack = fixedSlots(inventory?.backpack, 3, 6);
+  const extra = [inventory?.tp?.[0], inventory?.neutral?.[0], inventory?.enhancement?.[0]].filter(Boolean);
+
+  return (
+    <div className="overviewInventory" aria-label="Inventory">
+      <div className="overviewMainSlots">
+        {main.map((item: any, index: number) => (
+          <OverviewItemSlot item={item} key={`main-${index}`} />
+        ))}
+      </div>
+      <div className="overviewExtraSlots">
+        {backpack.map((item: any, index: number) => (
+          <OverviewItemSlot item={item} key={`backpack-${index}`} muted />
+        ))}
+        {extra.map((item: any, index: number) => (
+          <OverviewItemSlot item={item} key={`extra-${index}`} special />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OverviewItemSlot({ item, muted = false, special = false }: { item: any; muted?: boolean; special?: boolean }) {
+  const empty = !item?.key;
+
+  return (
+    <span className={`overviewItemSlot ${muted ? "muted" : ""} ${special ? "special" : ""} ${empty ? "empty" : ""}`} title={item?.name || "Empty"}>
+      {empty ? null : <img src={itemAsset(item.key)} alt="" onError={(event) => event.currentTarget.style.display = "none"} />}
+    </span>
+  );
+}
+
+function buildInventoryByHero(rows: any[]): Map<string, any> {
+  const best = new Map<string, any>();
+
+  for (const row of rows) {
+    if (!row?.hero) {
+      continue;
+    }
+
+    const current = best.get(row.hero);
+    if (!current || inventoryScore(row) > inventoryScore(current)) {
+      best.set(row.hero, row);
+    }
+  }
+
+  return best;
+}
+
+function inventoryScore(inventory: any): number {
+  return [
+    ...(inventory?.main || []),
+    ...(inventory?.backpack || []),
+    ...(inventory?.tp || []),
+    ...(inventory?.neutral || []),
+    ...(inventory?.enhancement || [])
+  ].filter((item: any) => item?.key).length;
 }
 
 function TimelinePanel({ events }: { events: any[] }) {
@@ -363,6 +513,25 @@ function abilityAsset(abilityKey: string): string {
   return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityKey}.png`;
 }
 
+function fixedSlots(items: any[] | undefined, count: number, startSlot: number): any[] {
+  const bySlot = new Map((items || []).map((item: any, index: number) => [Number(item?.slot ?? startSlot + index), item]));
+  return Array.from({ length: count }, (_, index) => bySlot.get(startSlot + index) || { slot: startSlot + index, key: null, name: null });
+}
+
+function winnerToTeam(winner: string | null | undefined): number | null {
+  if (!winner) {
+    return null;
+  }
+  const normalized = String(winner).toLowerCase();
+  if (normalized === "radiant" || normalized === "2") {
+    return 2;
+  }
+  if (normalized === "dire" || normalized === "3") {
+    return 3;
+  }
+  return null;
+}
+
 function eventLabel(type: string): string {
   const labels: Record<string, string> = {
     buyback: "Buyback",
@@ -382,6 +551,13 @@ function scoreText(match: MatchListItem): string {
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
+}
+
+function formatCompactNumber(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(value >= 10000 ? 1 : 2)}k`;
+  }
+  return formatNumber(value);
 }
 
 function formatGameTime(seconds: number): string {
