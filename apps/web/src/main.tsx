@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { Activity, Database, FolderSearch, ListChecks, RefreshCw } from "lucide-react";
 import { HomePage } from "./pages/HomePage";
 import { JobsPage } from "./pages/JobsPage";
@@ -20,18 +20,18 @@ function App() {
             </div>
           </div>
           <nav>
-            <Link to="/">
+            <NavLink to="/" end>
               <FolderSearch size={18} />
               Inbox
-            </Link>
-            <Link to="/matches">
+            </NavLink>
+            <NavLink to="/matches">
               <Database size={18} />
               Matches
-            </Link>
-            <Link to="/jobs">
+            </NavLink>
+            <NavLink to="/jobs">
               <ListChecks size={18} />
               Jobs
-            </Link>
+            </NavLink>
           </nav>
           <div className="sidebarNote">
             <RefreshCw size={16} />

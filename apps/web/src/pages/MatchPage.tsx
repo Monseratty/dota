@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArchiveX, Download, RefreshCw, RotateCcw } from "lucide-react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { ArchiveX, CalendarDays, Clock3, Download, FileArchive, RefreshCw, RotateCcw, ShieldCheck, Swords, Trophy, Users } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { deleteRawReplay, downloadUrl, getDashboard, getMatchDetails, reparseMatch, type MatchListItem, type ParseJob } from "../api/client";
 
@@ -81,9 +81,10 @@ export function MatchPage() {
   return (
     <div className="page">
       <header className="pageHeader">
-        <div>
+        <div className="matchTitleBlock">
           <span className="eyebrow">Match details</span>
           <h1>{match.matchId || match.sourceFilename}</h1>
+          <p>{match.sourceFilename} · {formatBytes(match.fileSize)}</p>
         </div>
         <div className="headerActions">
           {match.downloadUrl ? (
@@ -114,30 +115,13 @@ export function MatchPage() {
       </header>
 
       <section className="matchHero">
-        <div>
-          <span>Status</span>
-          <strong className={`statusText ${match.status}`}>{match.status}</strong>
-        </div>
-        <div>
-          <span>Score</span>
-          <strong>{scoreText(match)}</strong>
-        </div>
-        <div>
-          <span>Winner</span>
-          <strong>{match.winner || "unknown"}</strong>
-        </div>
-        <div>
-          <span>Raw replay</span>
-          <strong>{match.hasRawDemo ? "available" : "missing"}</strong>
-        </div>
-        <div>
-          <span>File size</span>
-          <strong>{formatBytes(match.fileSize)}</strong>
-        </div>
-        <div>
-          <span>Discovered</span>
-          <strong>{formatDate(match.discoveredAt)}</strong>
-        </div>
+        <HeroMetric icon={<ShieldCheck size={22} />} label="Status" value={match.status} className={`statusText ${match.status}`} />
+        <HeroMetric icon={<Swords size={22} />} label="Score" value={scoreText(match)} />
+        <HeroMetric icon={<Trophy size={22} />} label="Winner" value={match.winner || "unknown"} />
+        <HeroMetric icon={<Clock3 size={22} />} label="Duration" value={match.duration ? formatDuration(match.duration) : "unknown"} />
+        <HeroMetric icon={<Users size={22} />} label="Players" value={dashboard?.players?.length ? `${dashboard.players.length} / 10` : "10 / 10"} />
+        <HeroMetric icon={<FileArchive size={22} />} label="Raw replay" value={match.hasRawDemo ? "available" : "missing"} />
+        <HeroMetric icon={<CalendarDays size={22} />} label="Discovered" value={formatShortDate(match.discoveredAt)} />
       </section>
 
       {latestJob ? (
@@ -182,6 +166,18 @@ export function MatchPage() {
   );
 }
 
+function HeroMetric({ icon, label, value, className }: { icon: ReactNode; label: string; value: string; className?: string }) {
+  return (
+    <div className="matchHeroItem">
+      <span className="matchHeroIcon">{icon}</span>
+      <div>
+        <span>{label}</span>
+        <strong className={className}>{value}</strong>
+      </div>
+    </div>
+  );
+}
+
 function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListItem }) {
   const inventoryLookup = buildInventoryLookup(dashboard.finalInventory || []);
   const players = (dashboard.players || []).map((player: any) => ({
@@ -202,6 +198,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
 
   return (
     <>
+      <DraftStrip teams={teams} match={match} />
       <section className="panel matchOverviewPanel">
         <div className="panelHead overviewHead">
           <div>
@@ -274,6 +271,42 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
         ))}
       </section>
     </>
+  );
+}
+
+function DraftStrip({ teams, match }: { teams: any[]; match: MatchListItem }) {
+  return (
+    <section className="draftStrip">
+      {teams.map((group, index) => (
+        <Fragment key={group.team}>
+          {index === 1 ? (
+            <div className="draftCenter">
+              <span>Final score</span>
+              <strong>{scoreText(match)}</strong>
+              <small>{match.winner ? `${match.winner} victory` : "winner unknown"}</small>
+            </div>
+          ) : null}
+          <div className={`draftSide ${group.name.toLowerCase()} ${group.result}`}>
+            <div className="draftSideHead">
+              <div>
+                <span>{group.name}</span>
+                <strong>{group.result === "winner" ? "Победа" : group.result === "loser" ? "Поражение" : "Итог неизвестен"}</strong>
+              </div>
+              <b>{group.total ? formatCompactNumber(group.total.netWorth ?? group.total.gold ?? 0) : `${group.players.length} heroes`}</b>
+            </div>
+            <div className="draftHeroes">
+              {group.players.map((player: any) => (
+                <div className="draftHero" key={`${group.team}-${player.index}-${player.hero}`}>
+                  <img src={heroAsset(player.heroKey)} alt="" onError={(event) => event.currentTarget.style.display = "none"} />
+                  <span>{player.level ?? "-"}</span>
+                  <small>{player.displayName || player.name || player.heroName}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Fragment>
+      ))}
+    </section>
   );
 }
 
@@ -576,6 +609,11 @@ function formatGameTime(seconds: number): string {
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
 }
 
+function formatDuration(seconds: number): string {
+  const safe = Math.max(0, Math.round(seconds || 0));
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -587,5 +625,15 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "short",
     timeStyle: "short"
+  }).format(new Date(value));
+}
+
+function formatShortDate(value: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
   }).format(new Date(value));
 }
