@@ -183,10 +183,10 @@ export function MatchPage() {
 }
 
 function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListItem }) {
-  const inventoryByHero = buildInventoryByHero(dashboard.finalInventory || []);
+  const inventoryLookup = buildInventoryLookup(dashboard.finalInventory || []);
   const players = (dashboard.players || []).map((player: any) => ({
     ...player,
-    inventory: inventoryByHero.get(player.hero),
+    inventory: inventoryLookup.byPlayerId.get(Number(player.dataPlayerId)) || inventoryLookup.byHero.get(player.hero),
     itemBuild: dashboard.itemBuilds?.[player.hero] || [],
     abilityBuild: dashboard.abilityBuilds?.[player.hero] || []
   }));
@@ -198,7 +198,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
     total: (dashboard.teamTotals || []).find((total: any) => total.team === team),
     players: players.filter((player: any) => player.team === team)
   }));
-  const maxGold = Math.max(1, ...players.map((player: any) => Number(player.gold) || 0));
+  const maxNetWorth = Math.max(1, ...players.map((player: any) => Number(player.netWorth ?? player.gold) || 0));
 
   return (
     <>
@@ -220,7 +220,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
               <span>Игрок</span>
               <span>У / С / П</span>
               <span>Ур</span>
-              <span>Золото</span>
+              <span>Нетворс</span>
               <span>Доб / Deny</span>
               <span>Net</span>
               <span>Инвентарь</span>
@@ -239,7 +239,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
                     key={`${player.index}-${player.hero}`}
                     player={player}
                     result={group.result}
-                    maxGold={maxGold}
+                    maxNetWorth={maxNetWorth}
                   />
                 ))}
                 <div className={`overviewRow overviewTotal ${group.result}`}>
@@ -247,7 +247,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
                   <strong>{group.name} total</strong>
                   <span>{group.total ? `${group.total.kills} / ${group.total.deaths} / ${group.total.assists}` : "-"}</span>
                   <span></span>
-                  <span>{group.total ? formatCompactNumber(group.total.gold) : "-"}</span>
+                  <span>{group.total ? formatCompactNumber(group.total.netWorth ?? group.total.gold) : "-"}</span>
                   <span>{group.total ? `${group.total.lastHits} / ${group.total.denies}` : "-"}</span>
                   <span></span>
                   <span></span>
@@ -263,7 +263,7 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
           <div className={`panel teamPanel ${group.team === 2 ? "radiant" : "dire"}`} key={group.team}>
             <div className="panelHead">
               <h2>{group.name} builds</h2>
-              <span>{group.total ? `${group.total.kills}/${group.total.deaths}/${group.total.assists} · ${formatNumber(group.total.gold)} gold` : `${group.players.length} players`}</span>
+              <span>{group.total ? `${group.total.kills}/${group.total.deaths}/${group.total.assists} · ${formatNumber(group.total.netWorth ?? group.total.gold)} net` : `${group.players.length} players`}</span>
             </div>
             <div className="playerCards">
               {group.players.map((player: any) => (
@@ -277,9 +277,9 @@ function DashboardView({ dashboard, match }: { dashboard: any; match: MatchListI
   );
 }
 
-function OverviewPlayerRow({ player, result, maxGold }: { player: any; result: string; maxGold: number }) {
-  const gold = Number(player.gold) || 0;
-  const goldPercent = Math.max(5, Math.min(100, (gold / maxGold) * 100));
+function OverviewPlayerRow({ player, result, maxNetWorth }: { player: any; result: string; maxNetWorth: number }) {
+  const netWorth = Number(player.netWorth ?? player.gold) || 0;
+  const netWorthPercent = Math.max(5, Math.min(100, (netWorth / maxNetWorth) * 100));
 
   return (
     <div className={`overviewRow playerOverviewRow ${result}`}>
@@ -297,11 +297,11 @@ function OverviewPlayerRow({ player, result, maxGold }: { player: any; result: s
       <b className="overviewKda">{player.kills ?? 0} / {player.deaths ?? 0} / {player.assists ?? 0}</b>
       <span className="overviewLevel">{player.level ?? "-"}</span>
       <div className="overviewGold">
-        <strong>{formatCompactNumber(gold)}</strong>
-        <span><i style={{ width: `${goldPercent}%` }} /></span>
+        <strong>{formatCompactNumber(netWorth)}</strong>
+        <span><i style={{ width: `${netWorthPercent}%` }} /></span>
       </div>
       <span className="overviewCreeps">{player.lastHits ?? 0} / {player.denies ?? 0}</span>
-      <span className="overviewNet">{formatNumber(gold)}</span>
+      <span className="overviewNet">{formatNumber(netWorth)}</span>
       <OverviewInventory inventory={player.inventory} />
     </div>
   );
@@ -341,21 +341,30 @@ function OverviewItemSlot({ item, muted = false, special = false }: { item: any;
   );
 }
 
-function buildInventoryByHero(rows: any[]): Map<string, any> {
-  const best = new Map<string, any>();
+function buildInventoryLookup(rows: any[]): { byHero: Map<string, any>; byPlayerId: Map<number, any> } {
+  const byHero = new Map<string, any>();
+  const byPlayerId = new Map<number, any>();
 
   for (const row of rows) {
     if (!row?.hero) {
       continue;
     }
 
-    const current = best.get(row.hero);
+    const current = byHero.get(row.hero);
     if (!current || inventoryScore(row) > inventoryScore(current)) {
-      best.set(row.hero, row);
+      byHero.set(row.hero, row);
+    }
+
+    if (row.playerId != null) {
+      const playerId = Number(row.playerId);
+      const currentForPlayer = byPlayerId.get(playerId);
+      if (!currentForPlayer || inventoryScore(row) > inventoryScore(currentForPlayer)) {
+        byPlayerId.set(playerId, row);
+      }
     }
   }
 
-  return best;
+  return { byHero, byPlayerId };
 }
 
 function inventoryScore(inventory: any): number {
@@ -416,7 +425,7 @@ function PlayerCard({ player, inventory }: { player: any; inventory: any }) {
       <div className="smallStats">
         <span>LH {player.lastHits ?? 0}</span>
         <span>DN {player.denies ?? 0}</span>
-        <span>Gold {formatNumber(player.gold ?? 0)}</span>
+        <span>Net {formatNumber(player.netWorth ?? player.gold ?? 0)}</span>
         <span>Lvl {player.level ?? "-"}</span>
       </div>
       {abilityBuild.length > 0 ? (
@@ -496,9 +505,11 @@ function heroAsset(heroKey: string): string {
 const itemAliases: Record<string, string> = {
   assault_cuirass: "assault",
   blink_dagger: "blink",
+  boots_of_travel: "travel_boots",
   ironwood_branch: "branches",
   empty_bottle: "bottle",
-  dagon_upgraded: "dagon_5"
+  dagon_upgraded: "dagon_5",
+  plate_mail: "platemail"
 };
 
 function itemAsset(itemKey: string): string {

@@ -347,6 +347,7 @@ function teamTotal(name: string, team: number, players: any[]) {
     deaths: sum(players, "deaths"),
     assists: sum(players, "assists"),
     gold: sum(players, "gold"),
+    netWorth: sum(players, "netWorth"),
     lastHits: sum(players, "lastHits"),
     denies: sum(players, "denies")
   };

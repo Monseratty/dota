@@ -214,23 +214,47 @@ public class FullDemoDump implements AutoCloseable {
             if (team != 2 && team != 3) {
                 return null;
             }
-            int pos = countPriorPlayersOnTeam(idx, team);
+            int fallbackPos = countPriorPlayersOnTeam(idx, team);
+            int teamDataPos = teamDataPositionForPlayer(idx, team, fallbackPos);
             var row = new LinkedHashMap<String, Object>();
             row.put("index", idx);
             row.put("team", team);
             row.put("teamName", teamName(team));
-            row.put("name", value("PlayerResource", "m_vecPlayerData.%i.m_iszPlayerName", idx, team, pos));
-            row.put("level", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iLevel", idx, team, pos));
-            row.put("kills", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iKills", idx, team, pos));
-            row.put("deaths", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iDeaths", idx, team, pos));
-            row.put("assists", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iAssists", idx, team, pos));
-            row.put("gold", value("Data%n", "m_vecDataTeam.%p.m_iTotalEarnedGold", idx, team, pos));
-            row.put("lastHits", value("Data%n", "m_vecDataTeam.%p.m_iLastHitCount", idx, team, pos));
-            row.put("denies", value("Data%n", "m_vecDataTeam.%p.m_iDenyCount", idx, team, pos));
+            row.put("name", value("PlayerResource", "m_vecPlayerData.%i.m_iszPlayerName", idx, team, teamDataPos));
+            row.put("level", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iLevel", idx, team, teamDataPos));
+            row.put("kills", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iKills", idx, team, teamDataPos));
+            row.put("deaths", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iDeaths", idx, team, teamDataPos));
+            row.put("assists", value("PlayerResource", "m_vecPlayerTeamData.%i.m_iAssists", idx, team, teamDataPos));
+            row.put("gold", value("Data%n", "m_vecDataTeam.%p.m_iTotalEarnedGold", idx, team, teamDataPos));
+            row.put("reliableGold", value("Data%n", "m_vecDataTeam.%p.m_iReliableGold", idx, team, teamDataPos));
+            row.put("unreliableGold", value("Data%n", "m_vecDataTeam.%p.m_iUnreliableGold", idx, team, teamDataPos));
+            row.put("netWorth", value("Data%n", "m_vecDataTeam.%p.m_iNetWorth", idx, team, teamDataPos));
+            row.put("dataPlayerId", value("Data%n", "m_vecDataTeam.%p.m_nPlayerID", idx, team, teamDataPos));
+            row.put("lastHits", value("Data%n", "m_vecDataTeam.%p.m_iLastHitCount", idx, team, teamDataPos));
+            row.put("denies", value("Data%n", "m_vecDataTeam.%p.m_iDenyCount", idx, team, teamDataPos));
             return row;
         } catch (RuntimeException ignored) {
             return null;
         }
+    }
+
+    private int teamDataPositionForPlayer(int idx, int team, int fallbackPos) {
+        Object steamId = value("PlayerResource", "m_vecPlayerData.%i.m_iPlayerSteamID", idx, team, fallbackPos);
+        if (!(steamId instanceof Number playerSteamId)) {
+            return fallbackPos;
+        }
+
+        for (int pos = 0; pos < 24; pos++) {
+            try {
+                Object rowSteamId = value("Data%n", "m_vecDataTeam.%p.m_iPlayerSteamID", idx, team, pos);
+                if (rowSteamId instanceof Number n && n.longValue() == playerSteamId.longValue()) {
+                    return pos;
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+
+        return fallbackPos;
     }
 
     private int countPriorPlayersOnTeam(int idx, int team) {

@@ -153,7 +153,7 @@ export function persistDashboardData(db: Db, matchId: number, outputDir: string)
         nullable(player.kills),
         nullable(player.deaths),
         nullable(player.assists),
-        nullable(player.gold)
+        nullable(player.netWorth ?? player.gold)
       );
       playerIdsByHero.set(String(player.hero || ""), Number(result.lastInsertRowid));
     }
