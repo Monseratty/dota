@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { FileText, RefreshCw, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getJobs, type ParseJob } from "../api/client";
+import { getJobLog, getJobs, retryJob, type ParseJob, type ParserLog } from "../api/client";
 
 export function JobsPage() {
   const [jobs, setJobs] = useState<ParseJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<ParserLog | null>(null);
+  const [logLoadingId, setLogLoadingId] = useState<number | null>(null);
+  const [retryingId, setRetryingId] = useState<number | null>(null);
 
   async function refresh() {
     const nextJobs = await getJobs();
@@ -31,6 +34,31 @@ export function JobsPage() {
     done: jobs.filter((job) => job.status === "done").length,
     failed: jobs.filter((job) => job.status === "failed").length
   }), [jobs]);
+
+  async function handleShowLog(job: ParseJob) {
+    setLogLoadingId(job.id);
+    setError(null);
+    try {
+      setSelectedLog(await getJobLog(job.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load parser log");
+    } finally {
+      setLogLoadingId(null);
+    }
+  }
+
+  async function handleRetry(job: ParseJob) {
+    setRetryingId(job.id);
+    setError(null);
+    try {
+      await retryJob(job.id);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to retry job");
+    } finally {
+      setRetryingId(null);
+    }
+  }
 
   return (
     <div className="page">
@@ -67,6 +95,7 @@ export function JobsPage() {
             <span>Attempts</span>
             <span>Started</span>
             <span>Finished</span>
+            <span>Actions</span>
           </div>
           {jobs.map((job) => (
             <div className="jobRow" key={job.id}>
@@ -82,11 +111,33 @@ export function JobsPage() {
               <span>{job.attempts}</span>
               <span>{job.startedAt ? formatDate(job.startedAt) : "-"}</span>
               <span>{job.finishedAt ? formatDate(job.finishedAt) : "-"}</span>
+              <div className="rowActions">
+                <button className="iconButton" onClick={() => handleShowLog(job)} title="Show parser log" disabled={logLoadingId === job.id}>
+                  <FileText size={16} />
+                </button>
+                {job.status === "failed" ? (
+                  <button className="iconButton" onClick={() => handleRetry(job)} title="Retry failed job" disabled={retryingId === job.id}>
+                    <RotateCcw className={retryingId === job.id ? "spin" : ""} size={16} />
+                  </button>
+                ) : null}
+              </div>
             </div>
           ))}
           {!loading && jobs.length === 0 ? <div className="emptyState">No parser jobs yet.</div> : null}
         </div>
       </section>
+
+      {selectedLog ? (
+        <section className="panel">
+          <div className="panelHead">
+            <h2>Parser log #{selectedLog.jobId}</h2>
+            <span>{selectedLog.exists ? selectedLog.truncated ? "latest lines" : "full log" : "missing"}</span>
+          </div>
+          <pre className="parserLog">
+            {selectedLog.exists ? selectedLog.text || "Log is empty." : "Parser log file was not found for this job."}
+          </pre>
+        </section>
+      ) : null}
     </div>
   );
 }

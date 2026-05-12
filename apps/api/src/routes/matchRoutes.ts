@@ -52,6 +52,35 @@ export function registerMatchRoutes(
     jobs: jobs.listRecent()
   }));
 
+  app.get<{ Params: { id: string } }>("/api/jobs/:id/log", async (request, reply) => {
+    const job = jobs.findById(Number(request.params.id));
+    if (!job) {
+      return reply.code(404).send({ error: "Job not found" });
+    }
+
+    return {
+      jobId: job.id,
+      ...storage.readParserLog(job.id)
+    };
+  });
+
+  app.post<{ Params: { id: string } }>("/api/jobs/:id/retry", async (request, reply) => {
+    const job = jobs.findById(Number(request.params.id));
+    if (!job) {
+      return reply.code(404).send({ error: "Job not found" });
+    }
+
+    const match = matches.findById(job.matchId);
+    if (!match?.rawFilePath || !match.hasRawDemo) {
+      return reply.code(404).send({ error: "Raw replay is not available for retry" });
+    }
+
+    storage.deleteParsedData(match.id);
+    matches.markQueued(match.id);
+    const jobId = jobs.createQueued(match.id, match.rawFilePath);
+    return { ok: true, jobId };
+  });
+
   app.delete<{ Params: { id: string } }>("/api/matches/:id", async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match) {

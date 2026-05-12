@@ -94,6 +94,34 @@ export class StorageService {
     return JSON.parse(fs.readFileSync(dashboardPath, "utf8"));
   }
 
+  readParserLog(jobId: number, maxBytes = 120_000): { exists: boolean; text: string; truncated: boolean } {
+    const logPath = path.resolve(this.config.parserLogPath, `job-${jobId}.log`);
+    const root = path.resolve(this.config.parserLogPath);
+    if (!(logPath === root || logPath.startsWith(`${root}${path.sep}`))) {
+      throw new Error("Refusing to read parser log outside parser log storage");
+    }
+
+    if (!fs.existsSync(logPath)) {
+      return { exists: false, text: "", truncated: false };
+    }
+
+    const stat = fs.statSync(logPath);
+    const start = Math.max(0, stat.size - maxBytes);
+    const buffer = Buffer.alloc(stat.size - start);
+    const fd = fs.openSync(logPath, "r");
+    try {
+      fs.readSync(fd, buffer, 0, buffer.length, start);
+    } finally {
+      fs.closeSync(fd);
+    }
+
+    return {
+      exists: true,
+      text: buffer.toString("utf8"),
+      truncated: start > 0
+    };
+  }
+
   hasDashboard(matchDbId: number): boolean {
     return fs.existsSync(path.join(this.config.parsedPath, String(matchDbId), "dashboard.json"));
   }

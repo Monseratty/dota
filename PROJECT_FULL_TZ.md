@@ -118,6 +118,8 @@ DELETE /api/matches/:id/raw
 DELETE /api/matches/:id
 
 GET    /api/jobs
+GET    /api/jobs/:id/log
+POST   /api/jobs/:id/retry
 ```
 
 Важные правила безопасности:
@@ -125,6 +127,7 @@ GET    /api/jobs
 - raw replay download берется только из записи матча;
 - backend проверяет, что путь находится внутри `rawDemoPath`;
 - удаление raw replay также проверяет, что файл лежит внутри разрешенной папки;
+- parser log читается только по `job id` из папки `parserLogPath`;
 - пользователь не может передать произвольный path для скачивания или удаления.
 
 ### 2.5. Watch folder scanner
@@ -294,6 +297,8 @@ UI уже содержит:
 - фильтр по статусам;
 - список матчей;
 - кнопки открыть матч, скачать replay, reparse, удалить raw, удалить матч;
+- страницу parser jobs с просмотром parser log;
+- retry failed job из очереди parser jobs;
 - страницу match details;
 - кнопки Download replay, Reparse, Remove raw, Back;
 - статусный блок матча;
@@ -623,6 +628,7 @@ npm run doctor
 - raw replay можно скачать, если он существует;
 - raw replay можно удалить без удаления dashboard;
 - match можно reparse, если raw replay существует;
+- failed parser job можно открыть, посмотреть log и retry, если raw replay существует;
 - match можно удалить полностью.
 
 ## 9. Ограничения текущей версии
@@ -650,7 +656,7 @@ npm run doctor
 
 - Очередь сделана через SQLite.
 - Concurrency на MVP фактически 1.
-- Нет отдельного job retry UI.
+- Есть retry failed job и просмотр parser log на странице Jobs, но нет отдельного advanced log viewer.
 - Нет отдельного production process manager.
 - Нет Docker.
 - Нет автоматических unit/integration tests.
@@ -669,10 +675,10 @@ npm run doctor
 - Прогнать 10-30 разных демок.
 - Проверить, где parser падает.
 - Улучшить handling failed jobs.
-- Добавить кнопку retry failed job.
+- Улучшить UX retry failed job.
 - Добавить progress/state для long parsing.
 - Добавить readable parser error на UI.
-- Добавить страницу raw parser logs.
+- Улучшить raw parser logs viewer.
 
 ### Этап 2. Улучшить данные
 

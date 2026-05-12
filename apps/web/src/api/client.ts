@@ -43,6 +43,13 @@ export interface ParseJob {
   errorMessage: string | null;
 }
 
+export interface ParserLog {
+  jobId: number;
+  exists: boolean;
+  text: string;
+  truncated: boolean;
+}
+
 export async function getStorageInfo(): Promise<StorageInfo> {
   return request<StorageInfo>("/api/system/storage");
 }
@@ -68,6 +75,14 @@ export async function getDashboard(id: string): Promise<any> {
 export async function getJobs(): Promise<ParseJob[]> {
   const data = await request<{ jobs: ParseJob[] }>("/api/jobs");
   return data.jobs;
+}
+
+export async function getJobLog(id: number): Promise<ParserLog> {
+  return request<ParserLog>(`/api/jobs/${id}/log`);
+}
+
+export async function retryJob(id: number): Promise<void> {
+  await request(`/api/jobs/${id}/retry`, { method: "POST" });
 }
 
 export async function rescanFolder(): Promise<{ scanned: number; imported: number; skipped: Array<{ file: string; reason: string }> }> {

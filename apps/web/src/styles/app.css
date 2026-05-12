@@ -211,6 +211,12 @@ main {
   border-color: #34465a;
 }
 
+.ghostButton:disabled,
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .iconButton {
   width: 36px;
   height: 36px;
@@ -422,12 +428,12 @@ main {
 }
 
 .jobsTable {
-  min-width: 920px;
+  min-width: 1060px;
 }
 
 .jobRow {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) 110px 150px 90px 150px 150px;
+  grid-template-columns: minmax(180px, 1.4fr) 110px 150px 90px 150px 150px 100px;
   gap: 14px;
   align-items: center;
   min-height: 60px;
@@ -457,6 +463,17 @@ main {
 
 .jobRow a {
   color: var(--gold);
+}
+
+.parserLog {
+  max-height: 420px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  background: #070b10;
+  color: #cbd5df;
+  font: 12px/1.55 "SFMono-Regular", Consolas, monospace;
+  white-space: pre-wrap;
 }
 
 .matchRow strong,

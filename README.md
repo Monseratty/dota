@@ -116,6 +116,8 @@ In the UI:
 - `Download replay` downloads the raw `.dem` while it exists.
 - `Remove raw` deletes only the raw `.dem` and keeps the match dashboard.
 - `Delete match` deletes the match record, parsed JSON, and raw `.dem`.
+- Parser jobs can show their latest parser log from the Jobs page.
+- Failed parser jobs can be retried from the Jobs page while the raw `.dem` still exists.
 
 For automatic cleanup, edit `config.json`:
 
@@ -158,6 +160,7 @@ Replace `192.168.0.12` with the IP address of the machine running the API.
 - Matches: `http://localhost:5173/matches`
 - Parser jobs: `http://localhost:5173/jobs`
 - API health: `http://localhost:4300/api/health`
+- Parser log API: `http://localhost:4300/api/jobs/:id/log`
 
 ## Project Structure
 
