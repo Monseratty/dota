@@ -9,12 +9,19 @@ const db = openDatabase(config);
 
 console.log("[worker] parser worker started");
 
+let isParsing = false;
+
 async function tick(): Promise<void> {
+  if (isParsing) {
+    return;
+  }
+
   const job = getNextQueuedJob(db);
   if (!job) {
     return;
   }
 
+  isParsing = true;
   markJobRunning(db, job);
   const outputDir = path.join(config.parsedPath, String(job.matchId));
   console.log(`[worker] parsing job ${job.id}: ${job.rawFilePath}`);
@@ -28,12 +35,12 @@ async function tick(): Promise<void> {
   } catch (error) {
     markJobFailed(db, job, error);
     console.error(`[worker] job ${job.id} failed`, error);
+  } finally {
+    isParsing = false;
   }
 }
 
 await tick();
 setInterval(() => {
   tick().catch((error) => console.error("[worker] tick failed", error));
-}, 3000).unref();
-
-process.stdin.resume();
+}, 3000);

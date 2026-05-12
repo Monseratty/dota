@@ -60,6 +60,27 @@ export class JobsRepository {
     `).get(matchId);
   }
 
+  findActiveForMatch(matchId: number): ParseJobRow | null {
+    const row = this.db.prepare(`
+      SELECT
+        id,
+        match_id AS matchId,
+        raw_file_path AS rawFilePath,
+        status,
+        attempts,
+        created_at AS createdAt,
+        started_at AS startedAt,
+        finished_at AS finishedAt,
+        error_message AS errorMessage
+      FROM parse_jobs
+      WHERE match_id = ? AND status IN ('queued', 'running')
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(matchId) as ParseJobRow | undefined;
+
+    return row || null;
+  }
+
   findById(id: number): ParseJobRow | null {
     return this.db.prepare(`
       SELECT

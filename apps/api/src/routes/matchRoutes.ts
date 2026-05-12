@@ -75,6 +75,11 @@ export function registerMatchRoutes(
       return reply.code(404).send({ error: "Raw replay is not available for retry" });
     }
 
+    const activeJob = jobs.findActiveForMatch(match.id);
+    if (activeJob) {
+      return { ok: true, jobId: activeJob.id, alreadyQueued: true };
+    }
+
     storage.deleteParsedData(match.id);
     matches.markQueued(match.id);
     const jobId = jobs.createQueued(match.id, match.rawFilePath);
@@ -97,6 +102,11 @@ export function registerMatchRoutes(
     if (!match?.rawFilePath || !match.hasRawDemo) {
       return reply.code(404).send({ error: "Raw replay is not available for reparsing" });
     }
+    const activeJob = jobs.findActiveForMatch(match.id);
+    if (activeJob) {
+      return { ok: true, jobId: activeJob.id, alreadyQueued: true };
+    }
+
     storage.deleteParsedData(match.id);
     matches.markQueued(match.id);
     const jobId = jobs.createQueued(match.id, match.rawFilePath);
