@@ -8,7 +8,8 @@ const config = readConfig();
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const lanMode = process.argv.includes("--lan");
 const host = process.env.HOST_IP || (lanMode ? findLanAddress() : "localhost");
-const apiBase = process.env.VITE_API_BASE || `http://${host}:${config.apiPort}`;
+const apiBase = process.env.VITE_API_BASE || `auto (${host}:${config.apiPort})`;
+const webEnv = process.env.VITE_API_BASE ? { VITE_API_BASE: process.env.VITE_API_BASE } : {};
 
 console.log("[dev] starting Dota Replay Dashboard");
 console.log(`[dev] api:    http://localhost:${config.apiPort}`);
@@ -21,9 +22,7 @@ console.log(`[dev] web -> API: ${apiBase}`);
 const children = [
   start("api", ["--workspace", "apps/api", "run", "dev"]),
   start("worker", ["--workspace", "apps/worker", "run", "dev"]),
-  start("web", ["--workspace", "apps/web", "run", "dev", "--", "--host", "0.0.0.0"], {
-    VITE_API_BASE: apiBase
-  })
+  start("web", ["--workspace", "apps/web", "run", "dev", "--", "--host", "0.0.0.0"], webEnv)
 ];
 
 let shuttingDown = false;

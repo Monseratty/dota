@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4300";
+const API_BASE = resolveApiBase();
 
 export interface MatchListItem {
   id: number;
@@ -111,4 +111,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(await response.text());
   }
   return response.json() as Promise<T>;
+}
+
+function resolveApiBase(): string {
+  const inferred = `${window.location.protocol}//${window.location.hostname}:4300`;
+  const configured = import.meta.env.VITE_API_BASE;
+  if (!configured) {
+    return inferred;
+  }
+
+  try {
+    const configuredUrl = new URL(configured, window.location.origin);
+    if (configuredUrl.hostname === window.location.hostname) {
+      return configuredUrl.toString().replace(/\/$/, "");
+    }
+  } catch {
+    return inferred;
+  }
+
+  return inferred;
 }
