@@ -537,20 +537,36 @@ function heroAsset(heroKey: string): string {
 
 const itemAliases: Record<string, string> = {
   assault_cuirass: "assault",
+  battlefury: "bfury",
   blink_dagger: "blink",
   boots_of_travel: "travel_boots",
-  ironwood_branch: "branches",
-  empty_bottle: "bottle",
+  boots_of_travel_2: "travel_boots_2",
+  chain_mail: "chainmail",
+  cranium_basher: "basher",
   dagon_upgraded: "dagon_5",
-  plate_mail: "platemail"
+  divine_rapier: "rapier",
+  empty_bottle: "bottle",
+  enhancement_timelss: "enhancement_timeless",
+  gem_of_true_sight: "gem",
+  ironwood_branch: "branches",
+  invisibility_edge: "silver_edge",
+  moonshard: "moon_shard",
+  observer_ward: "ward_observer",
+  orchid_malevolence: "orchid",
+  perseverance: "pers",
+  plate_mail: "platemail",
+  refresher_orb: "refresher",
+  sentry_ward: "ward_sentry",
+  sheep_stick: "sheepstick",
+  splint_mail: "splintmail"
 };
 
 function itemAsset(itemKey: string): string {
   const key = itemAliases[itemKey] || itemKey;
   if (key.startsWith("recipe_")) {
-    return "https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/recipe.png";
+    return "/assets/dota/items/recipe.png";
   }
-  return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${key}.png`;
+  return `/assets/dota/items/${key}.png`;
 }
 
 function abilityAsset(abilityKey: string): string {
