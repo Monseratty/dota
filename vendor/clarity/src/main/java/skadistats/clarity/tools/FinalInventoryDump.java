@@ -32,7 +32,12 @@ public class FinalInventoryDump {
         try (var source = new MappedFileSource(args[0])) {
             new SimpleRunner(source).runWith(dump);
         }
-        Files.writeString(Path.of(args[1]), dump.toJson() + "\n");
+        dump.writeJson(Path.of(args[1]));
+    }
+
+    void writeJson(Path outputPath) throws Exception {
+        Files.createDirectories(outputPath.getParent());
+        Files.writeString(outputPath, toJson() + "\n");
     }
 
     private String toJson() {

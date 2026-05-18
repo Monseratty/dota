@@ -1,0 +1,273 @@
+/*
+ * Premium tactical-network overrides for the Match archive header.
+ * Load after app.css so these selectors win without touching component code.
+ */
+
+.networkHeader {
+  overflow: hidden;
+  isolation: isolate;
+  min-height: clamp(148px, 17vw, 188px);
+  border-color: rgba(106, 233, 255, 0.22);
+  background:
+    radial-gradient(circle at 79% 32%, rgba(68, 214, 255, 0.2), transparent 28%),
+    radial-gradient(circle at 90% 84%, rgba(110, 255, 184, 0.12), transparent 26%),
+    radial-gradient(circle at 16% 0%, rgba(255, 94, 42, 0.18), transparent 38%),
+    linear-gradient(118deg, rgba(5, 8, 11, 0.94), rgba(9, 15, 20, 0.9) 46%, rgba(3, 7, 10, 0.96)),
+    var(--surface);
+  box-shadow:
+    0 28px 88px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(89, 211, 255, 0.08);
+}
+
+.networkHeader::before {
+  z-index: 1;
+  width: 4px;
+  background: linear-gradient(180deg, #ff6a2f 0%, #62ddff 44%, #55ffb7 100%);
+  box-shadow:
+    0 0 30px rgba(98, 221, 255, 0.46),
+    0 0 64px rgba(255, 106, 47, 0.24);
+}
+
+.networkHeader::after {
+  z-index: 1;
+  height: 2px;
+  background:
+    linear-gradient(90deg, transparent, rgba(98, 221, 255, 0.34), rgba(85, 255, 183, 0.2), transparent),
+    linear-gradient(90deg, rgba(255, 106, 47, 0.18), transparent 34%, rgba(98, 221, 255, 0.14));
+}
+
+.headerNetworkMap {
+  position: relative;
+  flex: 0 1 clamp(330px, 39vw, 520px);
+  width: clamp(330px, 39vw, 520px);
+  min-width: min(330px, 100%);
+  height: clamp(124px, 13vw, 152px);
+  border: 1px solid rgba(126, 225, 255, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025) 34%, transparent 62%),
+    radial-gradient(circle at 18% 28%, rgba(255, 106, 47, 0.18), transparent 22%),
+    radial-gradient(circle at 82% 72%, rgba(85, 255, 183, 0.14), transparent 27%),
+    repeating-linear-gradient(90deg, rgba(130, 229, 255, 0.08) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(0deg, rgba(130, 229, 255, 0.055) 0 1px, transparent 1px 34px),
+    rgba(4, 10, 14, 0.46);
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(98, 221, 255, 0.1);
+  backdrop-filter: blur(18px) saturate(1.18);
+}
+
+.headerNetworkMap::before,
+.headerNetworkMap::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.headerNetworkMap::before {
+  inset: 10px 12px;
+  border: 1px solid rgba(126, 225, 255, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, transparent 0 18%, rgba(98, 221, 255, 0.12) 18% 18.4%, transparent 18.4% 100%),
+    linear-gradient(0deg, transparent 0 62%, rgba(85, 255, 183, 0.1) 62% 62.5%, transparent 62.5% 100%);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 92%, transparent);
+}
+
+.headerNetworkMap::after {
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 32%, rgba(255, 106, 47, 0.2), transparent 7%),
+    radial-gradient(circle at 48% 62%, rgba(98, 221, 255, 0.2), transparent 8%),
+    radial-gradient(circle at 76% 28%, rgba(207, 84, 255, 0.16), transparent 7%),
+    linear-gradient(104deg, transparent 0 42%, rgba(255, 255, 255, 0.1) 47%, transparent 55% 100%);
+  mix-blend-mode: screen;
+  opacity: 0.86;
+  animation: tacticalMapGlow 7s ease-in-out infinite;
+}
+
+.mapNode {
+  width: clamp(62px, 7vw, 86px);
+  height: clamp(34px, 3.6vw, 44px);
+  border: 1px solid color-mix(in srgb, currentColor 58%, rgba(255, 255, 255, 0.35));
+  border-radius: 999px;
+  clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 46%, rgba(255, 255, 255, 0.08)),
+    rgba(4, 12, 16, 0.76);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 12px 28px rgba(0, 0, 0, 0.28),
+    0 0 30px color-mix(in srgb, currentColor 42%, transparent);
+  text-shadow: 0 0 16px color-mix(in srgb, currentColor 70%, transparent);
+  backdrop-filter: blur(14px) saturate(1.28);
+  transform: translateZ(0);
+}
+
+.mapNode::before {
+  inset: 5px 8px;
+  border: 0;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.24;
+}
+
+.mapNode::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow:
+    0 0 12px currentColor,
+    -48px 0 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-50%);
+  animation: tacticalNodePulse 2.8s ease-in-out infinite;
+}
+
+.userNode {
+  left: clamp(14px, 3vw, 28px);
+  top: clamp(13px, 2vw, 22px);
+  color: #ff7747;
+}
+
+.parserNode {
+  left: clamp(116px, 13.4vw, 172px);
+  top: clamp(68px, 6.5vw, 88px);
+  color: #62ddff;
+}
+
+.matchNode {
+  right: clamp(104px, 12vw, 150px);
+  top: clamp(18px, 2.3vw, 30px);
+  color: #d976ff;
+}
+
+.dataNode {
+  right: clamp(16px, 3vw, 30px);
+  bottom: clamp(12px, 1.8vw, 22px);
+  color: #55ffb7;
+}
+
+.mapLink {
+  z-index: 1;
+  height: 40px;
+  border: 0;
+  border-top: 1px solid rgba(155, 229, 255, 0.22);
+  border-radius: 999px 999px 0 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(98, 221, 255, 0.7), rgba(85, 255, 183, 0.35), transparent) 0 0 / 88px 1px repeat-x;
+  filter: drop-shadow(0 0 10px rgba(98, 221, 255, 0.36));
+  opacity: 0.9;
+  animation: tacticalLinkFlow 3.8s linear infinite;
+}
+
+.mapLink::before,
+.mapLink::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.mapLink::before {
+  inset: -7px -2px auto;
+  height: 14px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(98, 221, 255, 0.2), transparent);
+  filter: blur(7px);
+}
+
+.mapLink::after {
+  right: -2px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(240, 253, 255, 0.95);
+  box-shadow: 0 0 16px rgba(98, 221, 255, 0.88);
+}
+
+.linkOne {
+  left: clamp(75px, 8.2vw, 112px);
+  top: clamp(47px, 4.8vw, 66px);
+  width: clamp(96px, 10vw, 136px);
+  transform: rotate(18deg);
+}
+
+.linkTwo {
+  left: clamp(177px, 20vw, 258px);
+  top: clamp(62px, 6.3vw, 80px);
+  width: clamp(92px, 10.2vw, 138px);
+  transform: rotate(-24deg);
+}
+
+.linkThree {
+  right: clamp(70px, 8.2vw, 104px);
+  top: clamp(62px, 5.7vw, 76px);
+  width: clamp(86px, 9.5vw, 128px);
+  transform: rotate(38deg);
+}
+
+@keyframes tacticalMapGlow {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translate3d(-1.5%, 0, 0);
+  }
+
+  50% {
+    opacity: 0.95;
+    transform: translate3d(1.5%, 0, 0);
+  }
+}
+
+@keyframes tacticalNodePulse {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translateY(-50%) scale(0.84);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.18);
+  }
+}
+
+@keyframes tacticalLinkFlow {
+  to {
+    background-position: 88px 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .headerNetworkMap {
+    flex-basis: clamp(320px, 42vw, 430px);
+    width: clamp(320px, 42vw, 430px);
+  }
+}
+
+@media (max-width: 900px) {
+  .networkHeader {
+    min-height: auto;
+  }
+
+  .headerNetworkMap {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headerNetworkMap::after,
+  .mapNode::after,
+  .mapLink {
+    animation: none;
+  }
+}

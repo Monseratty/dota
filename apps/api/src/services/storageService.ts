@@ -1,19 +1,36 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { S3ObjectStorage } from "@dota-replay/shared/storage/s3ObjectStorage";
 import type { AppConfig } from "../config/appConfig";
 
 export class StorageService {
-  constructor(private readonly config: AppConfig) {}
+  private readonly remoteRawStorage: S3ObjectStorage | null;
+
+  constructor(private readonly config: AppConfig) {
+    this.remoteRawStorage = config.replayStorage.driver === "s3" ? new S3ObjectStorage(config.replayStorage.s3) : null;
+  }
 
   storageInfo() {
     return {
       storagePath: this.config.storagePath,
       inboxPath: this.config.inboxPath,
       rawDemoPath: this.config.rawDemoPath,
+      tempDemoPath: this.config.tempDemoPath,
       parsedPath: this.config.parsedPath,
       failedPath: this.config.failedPath,
       parserLogPath: this.config.parserLogPath,
-      databasePath: this.config.databasePath
+      databasePath: this.config.databasePath,
+      replayStorage: this.config.replayStorage.driver === "s3" ? {
+        driver: "s3",
+        endpoint: this.config.replayStorage.s3.endpoint,
+        region: this.config.replayStorage.s3.region,
+        bucket: this.config.replayStorage.s3.bucket,
+        uploadPrefix: this.config.replayStorage.s3.uploadPrefix,
+        directUploadPrefix: this.config.replayStorage.s3.directUploadPrefix
+      } : {
+        driver: "local"
+      }
     };
   }
 
@@ -56,16 +73,66 @@ export class StorageService {
     };
   }
 
-  deleteRawFile(rawFilePath: string | null): void {
-    if (!rawFilePath) {
-      return;
+  async uploadRawFile(matchDbId: number, rawFilePath: string, sourceFilename: string): Promise<{ key: string } | null> {
+    if (!this.remoteRawStorage) {
+      return null;
     }
+    const key = this.remoteRawKey(matchDbId, sourceFilename);
+    await this.remoteRawStorage.putFile(rawFilePath, key);
+    return { key };
+  }
+
+  createRemoteUpload(filename: string): { uploadId: string; key: string; url: string; headers: Record<string, string> } {
+    if (!this.remoteRawStorage || this.config.replayStorage.driver !== "s3") {
+      throw new Error("S3 replay storage is not enabled");
+    }
+    const uploadId = cryptoRandomId();
+    const key = this.remoteUploadKey(uploadId, filename);
+    return {
+      uploadId,
+      key,
+      url: this.remoteRawStorage.createPresignedPutUrl(key),
+      headers: {
+        "content-type": "application/octet-stream"
+      }
+    };
+  }
+
+  tempRawFilePath(uploadId: string, sourceFilename: string): string {
+    const safeBase = sanitizeFileBase(path.parse(sourceFilename).name) || "upload";
+    const safeId = sanitizeFileBase(uploadId) || cryptoRandomId();
+    return path.join(this.config.tempDemoPath, `${safeId}-${safeBase}.dem`);
+  }
+
+  async restoreRawFile(rawFilePath: string | null, rawStorageKey: string | null): Promise<boolean> {
+    if (!rawFilePath || !rawStorageKey || !this.remoteRawStorage) {
+      return false;
+    }
+
     const resolved = path.resolve(rawFilePath);
     if (!this.isInsideRawDemoPath(resolved)) {
-      throw new Error("Refusing to delete a file outside raw demo storage");
+      throw new Error("Refusing to restore a file outside raw demo storage");
     }
     if (fs.existsSync(resolved)) {
-      fs.unlinkSync(resolved);
+      return true;
+    }
+    await this.remoteRawStorage.downloadToFile(rawStorageKey, resolved);
+    return true;
+  }
+
+  async deleteRawFile(rawFilePath: string | null, rawStorageKey?: string | null): Promise<void> {
+    if (rawFilePath) {
+      const resolved = path.resolve(rawFilePath);
+      if (!this.isInsideRawDemoPath(resolved)) {
+        throw new Error("Refusing to delete a file outside raw demo storage");
+      }
+      if (fs.existsSync(resolved)) {
+        fs.unlinkSync(resolved);
+      }
+    }
+
+    if (rawStorageKey && this.remoteRawStorage) {
+      await this.remoteRawStorage.deleteObject(rawStorageKey);
     }
   }
 
@@ -81,9 +148,38 @@ export class StorageService {
   }
 
   isInsideRawDemoPath(filePath: string): boolean {
-    const root = path.resolve(this.config.rawDemoPath);
     const resolved = path.resolve(filePath);
-    return resolved === root || resolved.startsWith(`${root}${path.sep}`);
+    return [this.config.rawDemoPath, this.config.tempDemoPath].some((folder) => {
+      const root = path.resolve(folder);
+      return resolved === root || resolved.startsWith(`${root}${path.sep}`);
+    });
+  }
+
+  hasLocalRawFile(rawFilePath: string | null): boolean {
+    if (!rawFilePath) {
+      return false;
+    }
+    const resolved = path.resolve(rawFilePath);
+    return this.isInsideRawDemoPath(resolved) && fs.existsSync(resolved);
+  }
+
+  localRawStat(rawFilePath: string | null): fs.Stats | null {
+    return rawFilePath && this.hasLocalRawFile(rawFilePath) ? fs.statSync(rawFilePath) : null;
+  }
+
+  createLocalRawStream(rawFilePath: string): fs.ReadStream {
+    const resolved = path.resolve(rawFilePath);
+    if (!this.isInsideRawDemoPath(resolved) || !fs.existsSync(resolved)) {
+      throw new Error("Replay file is not available locally");
+    }
+    return fs.createReadStream(resolved);
+  }
+
+  createRemoteDownloadUrl(rawStorageKey: string, filename: string): string | null {
+    if (!this.remoteRawStorage) {
+      return null;
+    }
+    return this.remoteRawStorage.createPresignedGetUrl(rawStorageKey, filename);
   }
 
   readDashboard(matchDbId: number): unknown | null {
@@ -125,8 +221,39 @@ export class StorageService {
   hasDashboard(matchDbId: number): boolean {
     return fs.existsSync(path.join(this.config.parsedPath, String(matchDbId), "dashboard.json"));
   }
+
+  private remoteRawKey(matchDbId: number, sourceFilename: string): string {
+    const now = new Date();
+    const yyyy = String(now.getUTCFullYear());
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(now.getUTCDate()).padStart(2, "0");
+    const parsed = path.parse(sourceFilename);
+    const safeBase = sanitizeFileBase(parsed.name) || `match-${matchDbId}`;
+    const prefix = this.config.replayStorage.driver === "s3" ? this.config.replayStorage.s3.uploadPrefix : "raw";
+    return [prefix, yyyy, mm, dd, `${matchDbId}-${safeBase}.dem`]
+      .map((part) => part.replace(/^\/+|\/+$/g, ""))
+      .filter(Boolean)
+      .join("/");
+  }
+
+  private remoteUploadKey(uploadId: string, sourceFilename: string): string {
+    const now = new Date();
+    const yyyy = String(now.getUTCFullYear());
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(now.getUTCDate()).padStart(2, "0");
+    const safeBase = sanitizeFileBase(path.parse(sourceFilename).name) || "upload";
+    const prefix = this.config.replayStorage.driver === "s3" ? this.config.replayStorage.s3.directUploadPrefix : "incoming";
+    return [prefix, yyyy, mm, dd, `${uploadId}-${safeBase}.dem`]
+      .map((part) => part.replace(/^\/+|\/+$/g, ""))
+      .filter(Boolean)
+      .join("/");
+  }
 }
 
 function sanitizeFileBase(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function cryptoRandomId(): string {
+  return crypto.randomUUID().replace(/-/g, "");
 }

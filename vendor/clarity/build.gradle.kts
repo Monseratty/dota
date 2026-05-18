@@ -85,6 +85,24 @@ tasks.register<JavaExec>("runSkillBuildDump") {
     mainClass.set("skadistats.clarity.tools.SkillBuildDump")
 }
 
+tasks.register<JavaExec>("runDashboardDump") {
+    group = "clarity tools"
+    description = "Dump the compact replay data needed by the dashboard in one replay pass."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("skadistats.clarity.tools.DashboardDump")
+}
+
+tasks.register("writeRuntimeClasspath") {
+    group = "clarity tools"
+    description = "Compile tools and write the runtime classpath used by the Node worker."
+    dependsOn("classes")
+    doLast {
+        val outputFile = layout.buildDirectory.file("runtime-classpath.txt").get().asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(sourceSets["main"].runtimeClasspath.files.joinToString(File.pathSeparator))
+    }
+}
+
 tasks.register<JavaExec>("runAbilityProbe") {
     group = "clarity tools"
     description = "Probe final ability entity properties."

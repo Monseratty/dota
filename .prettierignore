@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+.next
+vendor
+apps/**/.next
+apps/**/dist
+data
+storage

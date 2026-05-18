@@ -1,0 +1,185 @@
+/* Tactical responsive QA overrides. Load after app.css. */
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .matchesPage .matchRow {
+    grid-template-columns: minmax(200px, 1fr) minmax(120px, 0.72fr) 88px 118px minmax(128px, 0.66fr);
+    gap: 10px;
+    padding-inline: 12px;
+  }
+
+  .matchesPage .matchRow.head {
+    min-height: 40px;
+  }
+
+  .matchesPage .rowActions {
+    gap: 6px;
+  }
+
+  .matchesPage .rowTextButton {
+    min-width: 0;
+    padding-inline: 8px;
+  }
+}
+
+@media (max-width: 1240px) and (min-width: 901px) {
+  .matchesPage .tableToolbar {
+    position: static;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .matchesPage .searchField {
+    flex: 1 1 360px;
+    max-width: none;
+  }
+
+  .matchesPage .selectField,
+  .matchesPage .segmentedControl {
+    flex: 0 1 auto;
+  }
+
+  .matchesPage .matchRow.head {
+    top: 68px;
+  }
+}
+
+@media (max-width: 900px) {
+  .matchesPage .panelHead {
+    min-height: 54px;
+    padding-inline: 16px;
+  }
+
+  .matchesPage .tableToolbar {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .matchesPage .selectField {
+    width: 100%;
+  }
+
+  .matchesPage .selectField select {
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .matchesPage .quickFilters {
+    gap: 8px;
+    padding: 10px 14px 12px;
+  }
+
+  .matchesPage .quickFilters button,
+  .matchesPage .clearFilterButton {
+    min-width: min(156px, 100%);
+    flex: 1 1 148px;
+  }
+
+  .matchesPage .matchRow {
+    overflow: hidden;
+  }
+
+  .matchesPage .matchRow::before {
+    left: 6px;
+    top: 14px;
+  }
+
+  .matchesPage .matchRow::after {
+    display: none;
+  }
+
+  .matchesPage .matchIdentity,
+  .matchesPage .matchTags {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .matchesPage .heroPortraitStrip {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .matchesPage .heroPortrait,
+  .matchesPage .moreHeroes {
+    flex: 0 0 auto;
+  }
+
+  .matchesPage .matchTags button {
+    max-width: min(156px, 100%);
+  }
+}
+
+@media (max-width: 560px) {
+  .sidebar {
+    align-items: stretch;
+    padding-inline: 16px;
+    overflow-x: clip;
+  }
+
+  .sidebar nav {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .sidebar nav a {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    justify-content: center;
+  }
+
+  .publicShell .sidebar nav a:first-child {
+    grid-column: auto;
+  }
+
+  .publicShell .sidebarNote {
+    max-width: none;
+    width: 100%;
+  }
+
+  .matchesPage .pageHeader {
+    padding: 16px 18px;
+  }
+
+  .matchesPage .panelHead {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .matchesPage .matchRow {
+    padding: 14px 12px;
+  }
+
+  .matchesPage .matchRow > .rowActions[data-label] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .matchesPage .matchRow > .rowActions[data-label]::before {
+    grid-column: 1 / -1;
+  }
+
+  .matchesPage .rowActions .rowTextButton,
+  .matchesPage .rowActions .iconButton {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .matchesPage .rowActions .rowTextButton {
+    min-height: 36px;
+  }
+
+  .matchesPage .rowActions .iconButton {
+    min-height: 40px;
+  }
+}

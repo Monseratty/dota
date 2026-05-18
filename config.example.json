@@ -2,6 +2,7 @@
   "storagePath": "./storage",
   "inboxPath": "./storage/inbox",
   "rawDemoPath": "./storage/demos/raw",
+  "tempDemoPath": "./storage/tmp",
   "parsedPath": "./storage/parsed",
   "failedPath": "./storage/failed",
   "parserLogPath": "./storage/logs/parser",
@@ -11,6 +12,9 @@
   "parserConcurrency": 1,
   "keepRawDemos": true,
   "autoDeleteRawAfterDays": null,
+  "replayStorage": {
+    "driver": "local"
+  },
   "apiPort": 4300,
   "webPort": 5173
 }

@@ -1,0 +1,658 @@
+/* Tactical art direction layer. Import after app.css to activate. */
+:root {
+  --bg: #030507;
+  --bg-soft: #060a0e;
+  --surface: #0a1016;
+  --surface-2: #101822;
+  --surface-3: #172333;
+  --surface-flat: #070b10;
+  --line: #263747;
+  --line-soft: #172331;
+  --text: #f4f8fb;
+  --muted: #9baab6;
+  --faint: #657482;
+  --gold: #d4a94f;
+  --gold-soft: #ffe09a;
+  --radiant: #42c989;
+  --radiant-soft: #a8f2ca;
+  --dire: #e16262;
+  --dire-soft: #ffb3ad;
+  --cyan: #5fb7ff;
+  --violet: #a989ff;
+  --danger: #ff8f98;
+  --shadow: rgba(0, 0, 0, 0.56);
+  --tactical-blue: #2c7dff;
+  --tactical-ice: #b9e6ff;
+  --tactical-ember: #ff6b32;
+  --tactical-glass: rgba(8, 13, 19, 0.72);
+  --tactical-border: rgba(151, 178, 204, 0.22);
+  --tactical-border-strong: rgba(185, 230, 255, 0.34);
+  --tactical-grid: rgba(185, 230, 255, 0.035);
+}
+
+html {
+  background: #030507;
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgba(7, 12, 17, 0.96) 0, rgba(3, 5, 7, 0.98) 520px),
+    radial-gradient(circle at 16% 9%, rgba(255, 107, 50, 0.12), transparent 27%),
+    radial-gradient(circle at 86% 16%, rgba(44, 125, 255, 0.14), transparent 31%),
+    radial-gradient(circle at 58% 88%, rgba(66, 201, 137, 0.08), transparent 34%),
+    repeating-linear-gradient(90deg, var(--tactical-grid) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, rgba(185, 230, 255, 0.026) 0 1px, transparent 1px 72px),
+    #030507;
+}
+
+body::before {
+  background:
+    linear-gradient(105deg, transparent 0 21%, rgba(185, 230, 255, 0.06) 21% 21.08%, transparent 21.08%),
+    linear-gradient(116deg, transparent 0 64%, rgba(255, 107, 50, 0.07) 64% 64.09%, transparent 64.09%),
+    radial-gradient(circle at 50% 0%, rgba(185, 230, 255, 0.045), transparent 38%);
+  mask-image: linear-gradient(180deg, black, rgba(0, 0, 0, 0.78), transparent);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent, rgba(3, 5, 7, 0.34)),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px);
+  mix-blend-mode: screen;
+  opacity: 0.28;
+}
+
+.appShell {
+  isolation: isolate;
+}
+
+.networkBackdrop {
+  opacity: 0.72;
+  filter: saturate(1.22);
+}
+
+.networkBackdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 107, 50, 0.13), transparent 21%),
+    radial-gradient(circle at 76% 38%, rgba(44, 125, 255, 0.13), transparent 23%),
+    linear-gradient(90deg, rgba(3, 5, 7, 0.66), transparent 46%, rgba(3, 5, 7, 0.66));
+}
+
+.networkPath {
+  stroke-width: 1.1;
+  stroke-dasharray: 3 15;
+  filter: drop-shadow(0 0 8px currentColor);
+  animation-duration: 18s;
+}
+
+.networkPath.pathA {
+  stroke: rgba(255, 107, 50, 0.34);
+}
+
+.networkPath.pathB {
+  stroke: rgba(66, 201, 137, 0.28);
+}
+
+.networkPath.pathC {
+  stroke: rgba(95, 183, 255, 0.32);
+}
+
+.networkPath.pathD {
+  stroke: rgba(169, 137, 255, 0.22);
+}
+
+.networkNode {
+  width: 8px;
+  height: 8px;
+  background: #04080c;
+  box-shadow: 0 0 24px currentColor, 0 0 2px #fff inset;
+}
+
+.sidebar {
+  min-height: 72px;
+  border-bottom-color: rgba(185, 230, 255, 0.16);
+  background:
+    linear-gradient(90deg, rgba(255, 107, 50, 0.11), rgba(6, 10, 14, 0.92) 18%, rgba(4, 7, 10, 0.86)),
+    rgba(4, 7, 10, 0.88);
+  backdrop-filter: blur(22px) saturate(1.16);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.48), inset 0 -1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.brand::before {
+  width: 3px;
+  background: linear-gradient(180deg, var(--tactical-ember), var(--tactical-blue), var(--radiant));
+  box-shadow: 0 0 28px rgba(95, 183, 255, 0.34);
+}
+
+.brand > svg {
+  color: var(--tactical-ice);
+  filter: drop-shadow(0 0 12px rgba(95, 183, 255, 0.32));
+}
+
+.brand strong,
+.pageHeader h1,
+.heroSearchStage h1,
+.heroProfileHeader h1 {
+  letter-spacing: 0;
+}
+
+nav a,
+.sidebarButton,
+.primaryButton,
+.ghostButton,
+.iconButton,
+.textButton,
+.quickFilters button,
+.clearFilterButton,
+.rowTextButton,
+.segmentedControl,
+.searchField,
+.selectField {
+  border-color: var(--tactical-border);
+  background:
+    linear-gradient(180deg, rgba(18, 28, 38, 0.72), rgba(4, 8, 12, 0.84)),
+    rgba(4, 8, 12, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+nav a:hover,
+.sidebarButton:hover,
+.ghostButton:hover:not(:disabled),
+.iconButton:hover:not(:disabled),
+.quickFilters button:hover,
+.clearFilterButton:hover,
+.rowTextButton:hover {
+  border-color: rgba(185, 230, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(30, 45, 60, 0.9), rgba(8, 14, 20, 0.94)),
+    rgba(8, 14, 20, 0.86);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+nav a.active,
+.segmentedControl button.active,
+.quickFilters button.active,
+.rowTextButton.accent {
+  border-color: rgba(255, 107, 50, 0.54);
+  background:
+    linear-gradient(180deg, rgba(255, 107, 50, 0.23), rgba(44, 125, 255, 0.08)),
+    rgba(10, 14, 18, 0.86);
+  color: #ffd4bf;
+}
+
+nav a.active::after {
+  background: linear-gradient(90deg, var(--tactical-ember), var(--tactical-blue), var(--radiant));
+  box-shadow: 0 0 18px rgba(95, 183, 255, 0.44);
+}
+
+.page {
+  width: min(1640px, 100%);
+  padding-top: 28px;
+}
+
+.pageHeader,
+.metric,
+.panel,
+.notice,
+.matchHero,
+.jobSummary,
+.loginPanel,
+.heroSearchStage,
+.heroProfileHeader,
+.draftSide,
+.draftCenter,
+.insightPanel,
+.playerCard {
+  border-color: var(--tactical-border);
+  background:
+    linear-gradient(180deg, rgba(17, 27, 37, 0.82), rgba(5, 9, 14, 0.94)),
+    radial-gradient(circle at 12% 0%, rgba(255, 107, 50, 0.1), transparent 35%),
+    rgba(6, 11, 16, 0.9);
+  box-shadow:
+    0 30px 88px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.pageHeader,
+.panel,
+.metric,
+.insightPanel,
+.playerCard,
+.draftSide,
+.draftCenter {
+  position: relative;
+}
+
+.pageHeader::after,
+.panel::after,
+.metric::after,
+.insightPanel::after,
+.playerCard::after,
+.draftSide::after,
+.draftCenter::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(185, 230, 255, 0.42), rgba(255, 107, 50, 0.26), transparent);
+  transform: translateX(-100%);
+  animation: tacticalSweep 8s ease-in-out infinite;
+}
+
+.pageHeader {
+  min-height: 150px;
+  border-color: rgba(185, 230, 255, 0.22);
+  background:
+    radial-gradient(circle at 80% 42%, rgba(95, 183, 255, 0.16), transparent 27%),
+    radial-gradient(circle at 14% 0%, rgba(255, 107, 50, 0.2), transparent 34%),
+    linear-gradient(90deg, rgba(5, 10, 15, 0.72), rgba(8, 13, 18, 0.95) 43%, rgba(5, 10, 15, 0.8)),
+    rgba(6, 11, 16, 0.94);
+}
+
+.pageHeader::before {
+  width: 3px;
+  background: linear-gradient(180deg, var(--tactical-ember), var(--tactical-blue), var(--violet), var(--radiant));
+  box-shadow: 0 0 30px rgba(95, 183, 255, 0.42);
+}
+
+.pageHeader h1 {
+  color: #f8fbff;
+  text-shadow: 0 0 32px rgba(95, 183, 255, 0.16);
+}
+
+.pageHeader p,
+.matchTitleBlock p {
+  color: #a9b8c5;
+}
+
+.eyebrow {
+  color: var(--tactical-ice);
+  text-shadow: 0 0 16px rgba(95, 183, 255, 0.22);
+}
+
+.headerNetworkMap {
+  filter: saturate(1.2);
+}
+
+.mapNode {
+  border-color: currentColor;
+  background:
+    linear-gradient(180deg, rgba(14, 22, 30, 0.9), rgba(3, 7, 10, 0.94)),
+    #03070a;
+  box-shadow: 0 0 26px color-mix(in srgb, currentColor 52%, transparent);
+}
+
+.mapNode::before {
+  border-style: solid;
+  opacity: 0.2;
+}
+
+.mapLink {
+  border-top-color: rgba(185, 230, 255, 0.38);
+  filter: drop-shadow(0 0 9px rgba(95, 183, 255, 0.3));
+}
+
+.metric {
+  overflow: hidden;
+  min-height: 96px;
+  padding: 16px 17px 18px;
+  border-radius: 8px;
+}
+
+.metric::before {
+  height: 1px;
+  background: linear-gradient(90deg, var(--tactical-ember), var(--tactical-blue), var(--radiant), var(--gold-soft));
+}
+
+.metric span {
+  color: #9aaab8;
+}
+
+.metric strong {
+  color: #f7fbff;
+  text-shadow: 0 0 28px rgba(95, 183, 255, 0.13);
+}
+
+.metric:hover,
+.insightPanel:hover,
+.playerCard:hover {
+  border-color: var(--tactical-border-strong);
+  transform: translateY(-1px);
+  box-shadow:
+    0 34px 92px rgba(0, 0, 0, 0.52),
+    0 0 34px rgba(95, 183, 255, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.panel {
+  overflow: clip;
+  border-radius: 8px;
+}
+
+.panelHead,
+.tableToolbar,
+.quickFilters,
+.matchRow.head,
+.jobRow.head,
+.overviewHeader {
+  background:
+    linear-gradient(180deg, rgba(20, 31, 42, 0.94), rgba(6, 10, 15, 0.94)),
+    linear-gradient(90deg, rgba(255, 107, 50, 0.08), transparent 38%, rgba(95, 183, 255, 0.08));
+  border-bottom-color: rgba(185, 230, 255, 0.12);
+}
+
+.tableToolbar,
+.quickFilters,
+.matchSubnav,
+.heroAttributeTabs {
+  backdrop-filter: blur(18px) saturate(1.12);
+}
+
+.searchField:focus-within,
+.selectField:focus-within,
+.loginForm input:focus {
+  border-color: rgba(95, 183, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(95, 183, 255, 0.1), 0 0 28px rgba(95, 183, 255, 0.08);
+}
+
+.primaryButton {
+  border-color: rgba(255, 107, 50, 0.82);
+  background:
+    linear-gradient(180deg, #ff9f72, var(--tactical-ember)),
+    #ff6b32;
+  color: #160703;
+  box-shadow: 0 18px 38px rgba(255, 107, 50, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.primaryButton:hover:not(:disabled) {
+  box-shadow: 0 22px 46px rgba(255, 107, 50, 0.34), 0 0 22px rgba(255, 107, 50, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.matchTable,
+.jobsTable,
+.heroMatchList,
+.uploadList,
+.overviewTable {
+  background:
+    linear-gradient(90deg, rgba(185, 230, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(185, 230, 255, 0.026) 1px, transparent 1px),
+    rgba(3, 6, 9, 0.4);
+  background-size: 42px 42px;
+}
+
+.matchRow,
+.jobRow,
+.heroMatchRow,
+.uploadRow,
+.overviewRow,
+.timelineItem {
+  position: relative;
+  border-color: rgba(151, 178, 204, 0.15);
+  background:
+    linear-gradient(90deg, rgba(255, 107, 50, 0.05), rgba(8, 13, 18, 0.84) 24%, rgba(8, 13, 18, 0.78)),
+    rgba(8, 13, 18, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.matchRow:not(.head),
+.jobRow:not(.head),
+.heroMatchRow,
+.uploadRow {
+  margin: 8px 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 8px;
+}
+
+.matchRow:not(.head)::before,
+.jobRow:not(.head)::before,
+.heroMatchRow::before,
+.uploadRow::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 21px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(185, 230, 255, 0.56);
+  background: #03070a;
+  box-shadow: 0 0 16px rgba(95, 183, 255, 0.32);
+}
+
+.matchRow:not(.head)::after,
+.jobRow:not(.head)::after,
+.heroMatchRow::after,
+.uploadRow::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 30px;
+  bottom: -18px;
+  border-left: 1px dashed rgba(185, 230, 255, 0.18);
+}
+
+.matchRow.head,
+.jobRow.head {
+  margin: 0;
+  border-radius: 0;
+}
+
+.matchRow:hover:not(.head),
+.jobRow:hover:not(.head),
+.heroMatchRow:hover,
+.uploadRow:hover,
+.playerOverviewRow:hover,
+.timelineItem:hover {
+  border-color: rgba(185, 230, 255, 0.3);
+  background:
+    radial-gradient(circle at 92% 45%, rgba(95, 183, 255, 0.12), transparent 27%),
+    linear-gradient(90deg, rgba(255, 107, 50, 0.11), rgba(11, 17, 24, 0.96) 30%),
+    rgba(8, 13, 18, 0.9);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.28),
+    inset 3px 0 0 rgba(95, 183, 255, 0.62);
+  transform: translateY(-1px);
+}
+
+.matchRow.ready.radiantWin,
+.playerOverviewRow.winner {
+  background:
+    linear-gradient(90deg, rgba(66, 201, 137, 0.15), rgba(8, 13, 18, 0.84) 30%),
+    rgba(8, 13, 18, 0.72);
+}
+
+.matchRow.ready.direWin,
+.playerOverviewRow.loser {
+  background:
+    linear-gradient(90deg, rgba(225, 98, 98, 0.14), rgba(8, 13, 18, 0.84) 30%),
+    rgba(8, 13, 18, 0.72);
+}
+
+.heroPortrait,
+.overviewHero img,
+.leaderRow img,
+.playerCard header img,
+.inventorySlot,
+.overviewItemSlot,
+.buildIcon img {
+  border-color: rgba(151, 178, 204, 0.24);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
+.heroPortrait:hover,
+.overviewItemSlot:hover,
+.inventorySlot:hover,
+.buildIcon img:hover {
+  border-color: rgba(255, 107, 50, 0.62);
+  box-shadow: 0 0 20px rgba(255, 107, 50, 0.18);
+}
+
+.statusPill,
+.resultBadge,
+.matchTags button,
+.proBadge,
+.legendItem,
+.lineLabel {
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(17, 27, 37, 0.76), rgba(3, 7, 10, 0.86)),
+    rgba(3, 7, 10, 0.74);
+}
+
+.resultBadge,
+.statusPill {
+  box-shadow: 0 0 16px rgba(95, 183, 255, 0.06);
+}
+
+.resultBadge.radiant,
+.statusPill.ready,
+.statusPill.done {
+  border-color: rgba(66, 201, 137, 0.42);
+  color: var(--radiant-soft);
+}
+
+.resultBadge.dire,
+.statusPill.failed {
+  border-color: rgba(225, 98, 98, 0.42);
+  color: var(--dire-soft);
+}
+
+.matchTags button.pro,
+.proBadge {
+  border-color: rgba(255, 107, 50, 0.5);
+  background: rgba(255, 107, 50, 0.1);
+  color: #ffd4bf;
+}
+
+.splitBar,
+.leaderRow i,
+.overviewGold span,
+.uploadProgress {
+  background:
+    linear-gradient(90deg, rgba(185, 230, 255, 0.05) 1px, transparent 1px),
+    #111b26;
+  background-size: 12px 100%;
+}
+
+.splitBar .radiant,
+.overviewGold i,
+.leaderRow b,
+.uploadProgress span {
+  box-shadow: 0 0 18px rgba(66, 201, 137, 0.18);
+}
+
+.splitBar .dire {
+  box-shadow: 0 0 18px rgba(225, 98, 98, 0.18);
+}
+
+.draftStrip,
+.insightGrid,
+.teamColumns {
+  gap: 14px;
+}
+
+.draftSide.winner,
+.teamPanel.radiant {
+  border-color: rgba(66, 201, 137, 0.42);
+}
+
+.draftSide.loser,
+.teamPanel.dire {
+  border-color: rgba(225, 98, 98, 0.42);
+}
+
+.overviewTeamBar.winner {
+  background: linear-gradient(90deg, rgba(66, 201, 137, 0.24), rgba(8, 13, 18, 0.97) 60%);
+  box-shadow: inset 4px 0 0 var(--radiant-soft);
+}
+
+.overviewTeamBar.loser {
+  background: linear-gradient(90deg, rgba(225, 98, 98, 0.22), rgba(8, 13, 18, 0.97) 60%);
+  box-shadow: inset 4px 0 0 var(--dire-soft);
+}
+
+.timelineItem {
+  overflow: hidden;
+}
+
+.timelineItem::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(185, 230, 255, 0.05), transparent);
+  transform: translateX(-100%);
+}
+
+.timelineItem:hover::after {
+  animation: tacticalSweep 1.4s ease;
+}
+
+.skeletonRow span {
+  background: linear-gradient(90deg, rgba(95, 183, 255, 0.06), rgba(185, 230, 255, 0.22), rgba(255, 107, 50, 0.08));
+  background-size: 220% 100%;
+}
+
+::selection {
+  background: rgba(95, 183, 255, 0.32);
+  color: #fff;
+}
+
+@keyframes tacticalSweep {
+  0%, 54% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  66% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    min-height: auto;
+  }
+
+  .page {
+    padding-top: 18px;
+  }
+
+  .pageHeader {
+    min-height: auto;
+  }
+
+  .matchRow:not(.head),
+  .jobRow:not(.head),
+  .heroMatchRow,
+  .uploadRow {
+    margin: 8px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageHeader::after,
+  .panel::after,
+  .metric::after,
+  .insightPanel::after,
+  .playerCard::after,
+  .draftSide::after,
+  .draftCenter::after,
+  .timelineItem:hover::after {
+    animation: none;
+  }
+}

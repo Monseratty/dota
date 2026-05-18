@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "npm run dev:api & npm run dev:web",
     "dev:all": "npm run dev:api & npm run dev:worker & npm run dev:web",
+    "dev:next": "npm --workspace @dota-replay/ai-web run dev",
     "dev:local": "node scripts/dev-all.mjs",
     "dev:lan": "node scripts/dev-all.mjs --lan",
     "dev:api": "npm --workspace apps/api run dev",
@@ -17,7 +18,9 @@
     "dev:worker": "npm --workspace apps/worker run dev",
     "doctor": "node scripts/doctor.mjs",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

@@ -1,6 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
 import type { FastifyInstance } from "fastify";
+import type { AdminPreHandler } from "../auth/adminAuth";
 import type { JobsRepository } from "../repositories/jobsRepository";
 import type { MatchesRepository } from "../repositories/matchesRepository";
 import type { StorageService } from "../services/storageService";
@@ -9,7 +8,8 @@ export function registerMatchRoutes(
   app: FastifyInstance,
   matches: MatchesRepository,
   jobs: JobsRepository,
-  storage: StorageService
+  storage: StorageService,
+  requireAdmin: AdminPreHandler
 ): void {
   app.get("/api/matches", async () => ({
     matches: matches.list()
@@ -23,7 +23,7 @@ export function registerMatchRoutes(
     return { match, latestJob: jobs.findLatestForMatch(match.id) };
   });
 
-  app.get<{ Params: { id: string } }>("/api/matches/:id/jobs", async (request, reply) => {
+  app.get<{ Params: { id: string } }>("/api/matches/:id/jobs", { preHandler: requireAdmin }, async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match) {
       return reply.code(404).send({ error: "Match not found" });
@@ -48,11 +48,11 @@ export function registerMatchRoutes(
     return dashboard;
   });
 
-  app.get("/api/jobs", async () => ({
+  app.get("/api/jobs", { preHandler: requireAdmin }, async () => ({
     jobs: jobs.listRecent()
   }));
 
-  app.get<{ Params: { id: string } }>("/api/jobs/:id/log", async (request, reply) => {
+  app.get<{ Params: { id: string } }>("/api/jobs/:id/log", { preHandler: requireAdmin }, async (request, reply) => {
     const job = jobs.findById(Number(request.params.id));
     if (!job) {
       return reply.code(404).send({ error: "Job not found" });
@@ -64,7 +64,7 @@ export function registerMatchRoutes(
     };
   });
 
-  app.post<{ Params: { id: string } }>("/api/jobs/:id/retry", async (request, reply) => {
+  app.post<{ Params: { id: string } }>("/api/jobs/:id/retry", { preHandler: requireAdmin }, async (request, reply) => {
     const job = jobs.findById(Number(request.params.id));
     if (!job) {
       return reply.code(404).send({ error: "Job not found" });
@@ -74,6 +74,10 @@ export function registerMatchRoutes(
     if (!match?.rawFilePath || !match.hasRawDemo) {
       return reply.code(404).send({ error: "Raw replay is not available for retry" });
     }
+    await storage.restoreRawFile(match.rawFilePath, match.rawStorageKey);
+    if (!storage.hasLocalRawFile(match.rawFilePath)) {
+      return reply.code(409).send({ error: "Raw replay is remote-only and could not be restored for retry" });
+    }
 
     const activeJob = jobs.findActiveForMatch(match.id);
     if (activeJob) {
@@ -86,21 +90,25 @@ export function registerMatchRoutes(
     return { ok: true, jobId };
   });
 
-  app.delete<{ Params: { id: string } }>("/api/matches/:id", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/api/matches/:id", { preHandler: requireAdmin }, async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match) {
       return reply.code(404).send({ error: "Match not found" });
     }
-    storage.deleteRawFile(match.rawFilePath);
+    await storage.deleteRawFile(match.rawFilePath, match.rawStorageKey);
     storage.deleteParsedData(match.id);
     matches.markDeleted(match.id);
     return { ok: true };
   });
 
-  app.post<{ Params: { id: string } }>("/api/matches/:id/reparse", async (request, reply) => {
+  app.post<{ Params: { id: string } }>("/api/matches/:id/reparse", { preHandler: requireAdmin }, async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match?.rawFilePath || !match.hasRawDemo) {
       return reply.code(404).send({ error: "Raw replay is not available for reparsing" });
+    }
+    await storage.restoreRawFile(match.rawFilePath, match.rawStorageKey);
+    if (!storage.hasLocalRawFile(match.rawFilePath)) {
+      return reply.code(409).send({ error: "Raw replay is remote-only and could not be restored for reparsing" });
     }
     const activeJob = jobs.findActiveForMatch(match.id);
     if (activeJob) {
@@ -113,7 +121,7 @@ export function registerMatchRoutes(
     return { ok: true, jobId };
   });
 
-  app.delete<{ Params: { id: string } }>("/api/matches/:id/raw", async (request, reply) => {
+  app.delete<{ Params: { id: string } }>("/api/matches/:id/raw", { preHandler: requireAdmin }, async (request, reply) => {
     const match = matches.findById(Number(request.params.id));
     if (!match) {
       return reply.code(404).send({ error: "Match not found" });
@@ -122,7 +130,7 @@ export function registerMatchRoutes(
       return reply.code(404).send({ error: "Raw replay is already missing" });
     }
 
-    storage.deleteRawFile(match.rawFilePath);
+    await storage.deleteRawFile(match.rawFilePath, match.rawStorageKey);
     matches.markRawDeleted(match.id, "manual");
     return { ok: true };
   });
@@ -133,16 +141,22 @@ export function registerMatchRoutes(
       return reply.code(404).send({ error: "Replay file not found" });
     }
 
-    const rawFilePath = path.resolve(match.rawFilePath);
-    if (!storage.isInsideRawDemoPath(rawFilePath) || !fs.existsSync(rawFilePath)) {
-      return reply.code(404).send({ error: "Replay file not available" });
+    const stat = storage.localRawStat(match.rawFilePath);
+    reply.header("Content-Disposition", `attachment; filename="${safeDownloadName(match.matchId, match.sourceFilename)}"`);
+    if (stat && match.rawFilePath) {
+      reply.header("Content-Type", "application/octet-stream");
+      reply.header("Content-Length", stat.size);
+      return reply.send(storage.createLocalRawStream(match.rawFilePath));
     }
 
-    const stat = fs.statSync(rawFilePath);
-    reply.header("Content-Type", "application/octet-stream");
-    reply.header("Content-Length", stat.size);
-    reply.header("Content-Disposition", `attachment; filename="${safeDownloadName(match.matchId, match.sourceFilename)}"`);
-    return reply.send(fs.createReadStream(rawFilePath));
+    if (match.rawStorageKey) {
+      const url = storage.createRemoteDownloadUrl(match.rawStorageKey, safeDownloadName(match.matchId, match.sourceFilename));
+      if (url) {
+        return reply.redirect(url);
+      }
+    }
+
+    return reply.code(404).send({ error: "Replay file not available" });
   });
 }
 

@@ -9,6 +9,8 @@ export interface QueuedJob {
   id: number;
   matchId: number;
   rawFilePath: string;
+  rawStorageDriver: string | null;
+  rawStorageKey: string | null;
   attempts: number;
 }
 
@@ -16,23 +18,81 @@ export function openDatabase(config: AppConfig): Db {
   const db = new Database(config.databasePath);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
+  migrate(db);
   return db;
 }
 
 export function getNextQueuedJob(db: Db): QueuedJob | null {
   const row = db.prepare(`
     SELECT
-      id,
-      match_id AS matchId,
-      raw_file_path AS rawFilePath,
-      attempts
+      parse_jobs.id,
+      parse_jobs.match_id AS matchId,
+      parse_jobs.raw_file_path AS rawFilePath,
+      matches.raw_storage_driver AS rawStorageDriver,
+      matches.raw_storage_key AS rawStorageKey,
+      parse_jobs.attempts
     FROM parse_jobs
-    WHERE status = 'queued'
-    ORDER BY id ASC
+    JOIN matches ON matches.id = parse_jobs.match_id
+    WHERE parse_jobs.status = 'queued'
+    ORDER BY parse_jobs.id ASC
     LIMIT 1
   `).get() as QueuedJob | undefined;
 
   return row || null;
+}
+
+export function resetInterruptedRunningJobs(db: Db): number {
+  const now = new Date().toISOString();
+  const rows = db.prepare(`
+    SELECT id, match_id AS matchId
+    FROM parse_jobs
+    WHERE status = 'running'
+  `).all() as Array<{ id: number; matchId: number }>;
+
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  const resetJobs = db.transaction(() => {
+    const resetJob = db.prepare(`
+      UPDATE parse_jobs
+      SET status = 'queued', started_at = NULL, error_message = NULL
+      WHERE id = ?
+    `);
+    const resetMatch = db.prepare(`
+      UPDATE matches
+      SET status = 'queued', error_message = NULL, updated_at = ?
+      WHERE id = ?
+    `);
+
+    for (const row of rows) {
+      resetJob.run(row.id);
+      resetMatch.run(now, row.matchId);
+    }
+  });
+
+  resetJobs();
+  return rows.length;
+}
+
+function migrate(db: Db): void {
+  const matchTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'matches'").get();
+  if (!matchTable) {
+    return;
+  }
+
+  ensureColumn(db, "matches", "raw_storage_driver", "TEXT NOT NULL DEFAULT 'local'");
+  ensureColumn(db, "matches", "raw_storage_key", "TEXT");
+  ensureColumn(db, "matches", "raw_uploaded_at", "TEXT");
+  ensureColumn(db, "matches", "raw_upload_error", "TEXT");
+}
+
+function ensureColumn(db: Db, table: string, column: string, definition: string): void {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (columns.some((row) => row.name === column)) {
+    return;
+  }
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
 export function markJobRunning(db: Db, job: QueuedJob): void {
@@ -79,6 +139,42 @@ export function markJobDone(db: Db, job: QueuedJob, parsed: ParsedMatchMetadata)
     now,
     job.matchId
   );
+}
+
+export function findExistingMatchByParsedId(db: Db, parsedMatchId: string | null, currentMatchDbId: number): { id: number; sourceFilename: string } | null {
+  if (!parsedMatchId) {
+    return null;
+  }
+
+  const row = db.prepare(`
+    SELECT id, source_filename AS sourceFilename
+    FROM matches
+    WHERE match_id = ?
+      AND id != ?
+      AND status != 'deleted'
+    LIMIT 1
+  `).get(parsedMatchId, currentMatchDbId) as { id: number; sourceFilename: string } | undefined;
+
+  return row || null;
+}
+
+export function markJobDuplicate(db: Db, job: QueuedJob, parsedMatchId: string, existingMatchDbId: number): void {
+  const now = new Date().toISOString();
+  const message = `Duplicate replay for match ${parsedMatchId}; already imported as match row ${existingMatchDbId}`;
+  const markDuplicate = db.transaction(() => {
+    db.prepare(`
+      UPDATE parse_jobs
+      SET status = 'done', finished_at = ?, error_message = ?
+      WHERE id = ?
+    `).run(now, message, job.id);
+    db.prepare(`
+      UPDATE matches
+      SET status = 'deleted', error_message = ?, updated_at = ?
+      WHERE id = ?
+    `).run(message, now, job.matchId);
+  });
+
+  markDuplicate();
 }
 
 export function persistDashboardData(db: Db, matchId: number, outputDir: string): void {

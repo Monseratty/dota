@@ -1,0 +1,364 @@
+:root {
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 620ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-glow-warm: rgba(255, 94, 42, 0.2);
+  --motion-glow-cool: rgba(42, 170, 255, 0.16);
+}
+
+.networkPath {
+  animation: tactical-network-flow 18s linear infinite;
+  will-change: stroke-dashoffset, opacity;
+}
+
+.networkPath.pathB {
+  animation-duration: 22s;
+}
+
+.networkPath.pathC {
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+
+.networkPath.pathD {
+  animation-duration: 26s;
+}
+
+.networkNode {
+  animation: tactical-node-breathe 3.8s var(--motion-ease) infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+.networkNode::after {
+  animation: tactical-node-ring 3.8s var(--motion-ease) infinite;
+}
+
+.panel,
+.metric,
+.matchRow:not(.head),
+.heroPortrait,
+button {
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--motion-ease);
+}
+
+.panel,
+.metric {
+  transform: translateZ(0);
+  will-change: transform, box-shadow, border-color;
+}
+
+.panel:hover,
+.metric:hover {
+  border-color: rgba(255, 94, 42, 0.3);
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(42, 170, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  transform: translateY(-2px);
+}
+
+.panel::after,
+.metric::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 178, 143, 0.28), rgba(42, 170, 255, 0.2), transparent);
+  animation: tactical-surface-shimmer 8.5s var(--motion-ease) infinite;
+}
+
+.metric::before {
+  background-size: 220% 100%;
+  animation: tactical-gradient-drift 7s ease-in-out infinite;
+}
+
+.metric strong {
+  transition: color var(--motion-base) var(--motion-ease), text-shadow var(--motion-base) var(--motion-ease);
+}
+
+.metric:hover strong {
+  text-shadow: 0 0 26px rgba(42, 170, 255, 0.2), 0 0 18px rgba(255, 94, 42, 0.08);
+}
+
+.matchRow:not(.head) {
+  transition-property: background, border-color, box-shadow, transform, filter;
+  will-change: transform;
+}
+
+.matchRow:hover:not(.head) {
+  filter: saturate(1.04);
+  transform: translateY(-2px);
+}
+
+.matchRow:active:not(.head) {
+  transform: translateY(0);
+}
+
+.heroPortrait {
+  transition-property: border-color, box-shadow, filter, transform;
+}
+
+.heroPortrait:hover {
+  filter: brightness(1.16) saturate(1.08);
+  transform: translateY(-2px) scale(1.035);
+}
+
+.heroPortrait:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.primaryButton,
+.ghostButton,
+.iconButton,
+.textButton,
+.sidebarButton,
+.clearFilterButton,
+.quickFilters button,
+.segmentedControl button,
+.matchTags button,
+.heroAttributeTabs button,
+nav a {
+  position: relative;
+  overflow: hidden;
+  transition-property: background, border-color, color, box-shadow, transform, filter;
+}
+
+.primaryButton::after,
+.ghostButton::after,
+.iconButton::after,
+.textButton::after,
+.sidebarButton::after,
+.clearFilterButton::after,
+.quickFilters button::after,
+.segmentedControl button::after,
+.matchTags button::after,
+.heroAttributeTabs button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 0 34%, rgba(255, 255, 255, 0.16) 48%, transparent 62% 100%);
+  opacity: 0;
+  transform: translateX(-120%);
+}
+
+.primaryButton:hover:not(:disabled),
+.ghostButton:hover:not(:disabled),
+.iconButton:hover:not(:disabled),
+.textButton:hover:not(:disabled),
+.sidebarButton:hover:not(:disabled),
+.clearFilterButton:hover:not(:disabled),
+.quickFilters button:hover:not(:disabled),
+.segmentedControl button:hover:not(:disabled),
+.matchTags button:hover:not(:disabled),
+.heroAttributeTabs button:hover:not(:disabled),
+nav a:hover {
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 0 20px var(--motion-glow-cool);
+  filter: saturate(1.05);
+  transform: translateY(-1px);
+}
+
+.primaryButton:hover:not(:disabled)::after,
+.ghostButton:hover:not(:disabled)::after,
+.iconButton:hover:not(:disabled)::after,
+.textButton:hover:not(:disabled)::after,
+.sidebarButton:hover:not(:disabled)::after,
+.clearFilterButton:hover:not(:disabled)::after,
+.quickFilters button:hover:not(:disabled)::after,
+.segmentedControl button:hover:not(:disabled)::after,
+.matchTags button:hover:not(:disabled)::after,
+.heroAttributeTabs button:hover:not(:disabled)::after {
+  animation: tactical-button-sheen 950ms var(--motion-ease-out);
+}
+
+.primaryButton:active:not(:disabled),
+.ghostButton:active:not(:disabled),
+.iconButton:active:not(:disabled),
+.textButton:active:not(:disabled),
+.sidebarButton:active:not(:disabled),
+.clearFilterButton:active:not(:disabled),
+.quickFilters button:active:not(:disabled),
+.segmentedControl button:active:not(:disabled),
+.matchTags button:active:not(:disabled),
+.heroAttributeTabs button:active:not(:disabled),
+nav a:active {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  filter: brightness(0.98);
+  transform: translateY(0) scale(0.985);
+}
+
+.quickFilters button.active,
+.segmentedControl button.active,
+.heroAttributeTabs button.active,
+nav a.active {
+  box-shadow:
+    0 0 0 1px rgba(255, 94, 42, 0.12),
+    0 0 24px var(--motion-glow-warm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.skeletonRow span {
+  background-size: 260% 100%;
+  animation: tactical-skeleton-shimmer 1.35s var(--motion-ease) infinite;
+}
+
+@keyframes tactical-network-flow {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0.54;
+  }
+  50% {
+    opacity: 0.86;
+  }
+  100% {
+    stroke-dashoffset: -260;
+    opacity: 0.54;
+  }
+}
+
+@keyframes tactical-node-breathe {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 18px currentColor;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 30px currentColor;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes tactical-node-ring {
+  0%, 100% {
+    opacity: 0.14;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes tactical-surface-shimmer {
+  0%, 58% {
+    opacity: 0;
+    transform: translateX(-110%);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+@keyframes tactical-gradient-drift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes tactical-button-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%);
+  }
+  26% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+}
+
+@keyframes tactical-skeleton-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+@media (hover: none) {
+  .panel:hover,
+  .metric:hover,
+  .matchRow:hover:not(.head),
+  .heroPortrait:hover,
+  .primaryButton:hover:not(:disabled),
+  .ghostButton:hover:not(:disabled),
+  .iconButton:hover:not(:disabled),
+  .textButton:hover:not(:disabled),
+  .sidebarButton:hover:not(:disabled),
+  .clearFilterButton:hover:not(:disabled),
+  .quickFilters button:hover:not(:disabled),
+  .segmentedControl button:hover:not(:disabled),
+  .matchTags button:hover:not(:disabled),
+  .heroAttributeTabs button:hover:not(:disabled),
+  nav a:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .networkPath,
+  .networkNode,
+  .networkNode::after,
+  .panel::after,
+  .metric::after,
+  .metric::before,
+  .skeletonRow span {
+    animation: none !important;
+  }
+
+  .panel:hover,
+  .metric:hover,
+  .matchRow:hover:not(.head),
+  .matchRow:active:not(.head),
+  .heroPortrait:hover,
+  .heroPortrait:active,
+  .primaryButton:hover:not(:disabled),
+  .ghostButton:hover:not(:disabled),
+  .iconButton:hover:not(:disabled),
+  .textButton:hover:not(:disabled),
+  .sidebarButton:hover:not(:disabled),
+  .clearFilterButton:hover:not(:disabled),
+  .quickFilters button:hover:not(:disabled),
+  .segmentedControl button:hover:not(:disabled),
+  .matchTags button:hover:not(:disabled),
+  .heroAttributeTabs button:hover:not(:disabled),
+  .primaryButton:active:not(:disabled),
+  .ghostButton:active:not(:disabled),
+  .iconButton:active:not(:disabled),
+  .textButton:active:not(:disabled),
+  .sidebarButton:active:not(:disabled),
+  .clearFilterButton:active:not(:disabled),
+  .quickFilters button:active:not(:disabled),
+  .segmentedControl button:active:not(:disabled),
+  .matchTags button:active:not(:disabled),
+  .heroAttributeTabs button:active:not(:disabled),
+  nav a:hover,
+  nav a:active {
+    filter: none;
+    transform: none;
+  }
+}

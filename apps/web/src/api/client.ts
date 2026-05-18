@@ -1,3 +1,4 @@
+const API_BASE_STORAGE_KEY = "dota-replay-api-base";
 const API_BASE = resolveApiBase();
 
 export interface MatchListItem {
@@ -16,19 +17,41 @@ export interface MatchListItem {
   parsedAt: string | null;
   errorMessage: string | null;
   hasRawDemo: boolean;
+  hasLocalRawDemo: boolean;
+  hasRemoteRawDemo: boolean;
   rawDemoSize: number | null;
+  rawStorageDriver: string | null;
+  rawStorageKey: string | null;
+  rawUploadedAt: string | null;
+  rawUploadError: string | null;
   downloadUrl: string | null;
   dashboardReady: boolean;
+  heroes?: string[];
+  proPlayers?: string[];
+}
+
+export interface AdminSession {
+  configured: boolean;
+  authenticated: boolean;
 }
 
 export interface StorageInfo {
   storagePath: string;
   inboxPath: string;
   rawDemoPath: string;
+  tempDemoPath?: string;
   parsedPath: string;
   failedPath: string;
   parserLogPath: string;
   databasePath: string;
+  replayStorage?: {
+    driver: "local" | "s3";
+    endpoint?: string;
+    region?: string;
+    bucket?: string;
+    uploadPrefix?: string;
+    directUploadPrefix?: string;
+  };
 }
 
 export interface ParseJob {
@@ -48,6 +71,53 @@ export interface ParserLog {
   exists: boolean;
   text: string;
   truncated: boolean;
+}
+
+export interface ReplayUploadTicket {
+  uploadId: string;
+  key: string;
+  url: string;
+  headers: Record<string, string>;
+}
+
+export interface HeroBuildEntry {
+  key: string;
+  name: string;
+  time: number | null;
+}
+
+export interface HeroAbilityBuildEntry extends HeroBuildEntry {
+  abilityLevel: number | null;
+}
+
+export interface HeroBuildPattern {
+  count: number;
+  matches: number;
+  items: HeroBuildEntry[];
+}
+
+export interface HeroAbilityBuildPattern {
+  count: number;
+  matches: number;
+  abilities: HeroAbilityBuildEntry[];
+}
+
+export interface HeroCommonItem {
+  key: string;
+  name: string;
+  count: number;
+  matches: number;
+  frequency: number;
+  avgTime: number | null;
+}
+
+export interface HeroBuildAnalytics {
+  heroKey: string;
+  appearances: number;
+  startingItems: HeroBuildPattern | null;
+  itemBuild: HeroBuildPattern | null;
+  abilityBuild: HeroAbilityBuildPattern | null;
+  commonItems: HeroCommonItem[];
 }
 
 export async function getStorageInfo(): Promise<StorageInfo> {
@@ -70,6 +140,11 @@ export async function getMatchDetails(id: string): Promise<{ match: MatchListIte
 
 export async function getDashboard(id: string): Promise<any> {
   return request<any>(`/api/matches/${id}/dashboard`);
+}
+
+export async function getHeroBuildAnalytics(heroKey: string): Promise<HeroBuildAnalytics> {
+  const data = await request<{ analytics: HeroBuildAnalytics }>(`/api/heroes/${encodeURIComponent(heroKey)}/analytics`);
+  return data.analytics;
 }
 
 export async function getJobs(): Promise<ParseJob[]> {
@@ -101,12 +176,61 @@ export async function deleteRawReplay(id: number): Promise<void> {
   await request(`/api/matches/${id}/raw`, { method: "DELETE" });
 }
 
+export async function presignReplayUpload(file: File): Promise<ReplayUploadTicket> {
+  return request<ReplayUploadTicket>("/api/uploads/replays/presign", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      filename: file.name,
+      fileSize: file.size
+    })
+  });
+}
+
+export async function completeReplayUpload(ticket: ReplayUploadTicket, file: File): Promise<{ ok: boolean; match: MatchListItem; jobId: number }> {
+  return request<{ ok: boolean; match: MatchListItem; jobId: number }>("/api/uploads/replays/complete", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      uploadId: ticket.uploadId,
+      key: ticket.key,
+      filename: file.name,
+      fileSize: file.size
+    })
+  });
+}
+
 export function downloadUrl(path: string): string {
   return `${API_BASE}${path}`;
 }
 
+export async function getAdminSession(): Promise<AdminSession> {
+  return request<AdminSession>("/api/admin/session");
+}
+
+export async function adminLogin(password: string): Promise<void> {
+  await request("/api/admin/login", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({ password })
+  });
+}
+
+export async function adminLogout(): Promise<void> {
+  await request("/api/admin/logout", { method: "POST" });
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, init);
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    credentials: "include"
+  });
   if (!response.ok) {
     throw new Error(await response.text());
   }
@@ -114,20 +238,65 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function resolveApiBase(): string {
+  const runtimeApiBase = readRuntimeApiBase();
+  if (runtimeApiBase) {
+    return runtimeApiBase;
+  }
+
+  const configured = import.meta.env.VITE_API_BASE?.trim();
+  if (configured) {
+    return normalizeApiBase(configured, window.location.origin);
+  }
+
   const inferred = `${window.location.protocol}//${window.location.hostname}:4300`;
-  const configured = import.meta.env.VITE_API_BASE;
-  if (!configured) {
-    return inferred;
-  }
+  return normalizeApiBase(inferred, window.location.origin);
+}
 
+function readRuntimeApiBase(): string | null {
   try {
-    const configuredUrl = new URL(configured, window.location.origin);
-    if (configuredUrl.hostname === window.location.hostname) {
-      return configuredUrl.toString().replace(/\/$/, "");
+    const url = new URL(window.location.href);
+    const fromQuery = url.searchParams.get("api") || url.searchParams.get("apiBase");
+    if (fromQuery) {
+      const normalized = normalizeApiBase(fromQuery, window.location.origin);
+      window.localStorage.setItem(apiBaseStorageKey(), normalized);
+      return normalized;
     }
-  } catch {
-    return inferred;
-  }
 
-  return inferred;
+    const stored = window.localStorage.getItem(apiBaseStorageKey());
+    if (stored) {
+      return normalizeApiBase(stored, window.location.origin);
+    }
+
+    const legacyStored = window.localStorage.getItem(API_BASE_STORAGE_KEY);
+    if (legacyStored && shouldUseLegacyApiBase(legacyStored)) {
+      const normalized = normalizeApiBase(legacyStored, window.location.origin);
+      window.localStorage.setItem(apiBaseStorageKey(), normalized);
+      return normalized;
+    }
+
+    if (legacyStored && !shouldUseLegacyApiBase(legacyStored)) {
+      window.localStorage.removeItem(API_BASE_STORAGE_KEY);
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeApiBase(value: string, base: string): string {
+  return new URL(value, base).toString().replace(/\/$/, "");
+}
+
+function apiBaseStorageKey(): string {
+  return `${API_BASE_STORAGE_KEY}:${window.location.origin}`;
+}
+
+function shouldUseLegacyApiBase(value: string): boolean {
+  try {
+    const legacy = new URL(value, window.location.origin);
+    return legacy.hostname === window.location.hostname;
+  } catch {
+    return false;
+  }
 }

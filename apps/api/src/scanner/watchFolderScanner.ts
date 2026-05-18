@@ -72,6 +72,14 @@ export class WatchFolderScanner {
 
         const matchId = this.matches.createQueued(moved);
         this.jobs.createQueued(matchId, moved.rawFilePath);
+        try {
+          const uploaded = await this.storage.uploadRawFile(matchId, moved.rawFilePath, moved.sourceFilename);
+          if (uploaded) {
+            this.matches.markRawUploaded(matchId, uploaded.key);
+          }
+        } catch (error) {
+          this.matches.markRawUploadFailed(matchId, error);
+        }
         result.imported += 1;
       }
 

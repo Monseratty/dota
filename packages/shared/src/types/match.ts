@@ -25,6 +25,14 @@ export interface MatchListItem {
   errorMessage: string | null;
   hasRawDemo: boolean;
   rawDemoSize: number | null;
+  hasLocalRawDemo?: boolean;
+  hasRemoteRawDemo?: boolean;
+  rawStorageDriver?: string | null;
+  rawStorageKey?: string | null;
+  rawUploadedAt?: string | null;
+  rawUploadError?: string | null;
+  heroes?: string[];
+  proPlayers?: string[];
 }
 
 export interface ParseJob {

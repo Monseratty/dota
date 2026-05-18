@@ -34,12 +34,18 @@ import java.util.TreeMap;
 @UsesEntities
 public class FullDemoDump implements AutoCloseable {
 
+    public enum Mode {
+        FULL,
+        DASHBOARD
+    }
+
     @Insert
     private Context ctx;
 
     @Insert
     private Entities entities;
 
+    private final Mode mode;
     private final BufferedWriter combatLog;
     private final BufferedWriter gameEvents;
     private final BufferedWriter chat;
@@ -51,11 +57,26 @@ public class FullDemoDump implements AutoCloseable {
     private long interestingUserMessageCount;
 
     public FullDemoDump(Path outputDir) throws IOException {
+        this(outputDir, Mode.FULL);
+    }
+
+    public FullDemoDump(Path outputDir, Mode mode) throws IOException {
         Files.createDirectories(outputDir);
+        this.mode = mode;
         combatLog = Files.newBufferedWriter(outputDir.resolve("combat_log.jsonl"));
-        gameEvents = Files.newBufferedWriter(outputDir.resolve("game_events.jsonl"));
-        chat = Files.newBufferedWriter(outputDir.resolve("chat.jsonl"));
-        userMessages = Files.newBufferedWriter(outputDir.resolve("user_messages_interesting.jsonl"));
+        if (mode == Mode.FULL) {
+            gameEvents = Files.newBufferedWriter(outputDir.resolve("game_events.jsonl"));
+            chat = Files.newBufferedWriter(outputDir.resolve("chat.jsonl"));
+            userMessages = Files.newBufferedWriter(outputDir.resolve("user_messages_interesting.jsonl"));
+        } else {
+            gameEvents = null;
+            chat = null;
+            userMessages = null;
+            Files.deleteIfExists(outputDir.resolve("game_events.jsonl"));
+            Files.deleteIfExists(outputDir.resolve("chat.jsonl"));
+            Files.deleteIfExists(outputDir.resolve("user_messages_interesting.jsonl"));
+            Files.deleteIfExists(outputDir.resolve("message_counts.json"));
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -71,16 +92,17 @@ public class FullDemoDump implements AutoCloseable {
 
         long started = System.currentTimeMillis();
         try (var source = new MappedFileSource(demoPath);
-             var dump = new FullDemoDump(outputDir)) {
+            var dump = new FullDemoDump(outputDir)) {
             new SimpleRunner(source).runWith(dump);
-            dump.writeScoreboard(outputDir.resolve("scoreboard.json"));
-            dump.writeMessageCounts(outputDir.resolve("message_counts.json"));
-            dump.writeReport(outputDir.resolve("run_report.json"), System.currentTimeMillis() - started);
+            dump.writeOutputs(outputDir, System.currentTimeMillis() - started);
         }
     }
 
     @OnMessage
     public void onAnyMessage(GeneratedMessage message) {
+        if (mode == Mode.DASHBOARD) {
+            return;
+        }
         messageCounts.merge(message.getClass().getName(), 1L, Long::sum);
         if (isInterestingUserMessage(message)) {
             var values = new LinkedHashMap<String, Object>();
@@ -99,6 +121,9 @@ public class FullDemoDump implements AutoCloseable {
 
     @OnMessage(S2UserMessages.CUserMessageSayText2.class)
     public void onChat(S2UserMessages.CUserMessageSayText2 message) throws IOException {
+        if (chat == null) {
+            return;
+        }
         var values = new LinkedHashMap<String, Object>();
         values.put("tick", tick());
         values.put("sender", message.hasParam1() ? message.getParam1() : null);
@@ -110,6 +135,9 @@ public class FullDemoDump implements AutoCloseable {
 
     @OnCombatLogEntry
     public void onCombatLogEntry(CombatLogEntry entry) throws IOException {
+        if (mode == Mode.DASHBOARD && !isDashboardCombatLogEntry(entry)) {
+            return;
+        }
         var values = new LinkedHashMap<String, Object>();
         values.put("tick", tick());
         values.put("type", entry.hasType() ? entry.getType().name() : null);
@@ -120,6 +148,9 @@ public class FullDemoDump implements AutoCloseable {
 
     @OnGameEvent
     public void onGameEvent(GameEvent event) throws IOException {
+        if (gameEvents == null) {
+            return;
+        }
         var values = new LinkedHashMap<String, Object>();
         values.put("tick", tick());
         values.put("name", event.getName());
@@ -206,6 +237,29 @@ public class FullDemoDump implements AutoCloseable {
             }
             out.write("\n]\n");
         }
+    }
+
+    void writeOutputs(Path outputDir, long elapsedMillis) throws IOException {
+        writeScoreboard(outputDir.resolve("scoreboard.json"));
+        if (mode == Mode.FULL) {
+            writeMessageCounts(outputDir.resolve("message_counts.json"));
+        }
+        writeReport(outputDir.resolve("run_report.json"), elapsedMillis);
+    }
+
+    private boolean isDashboardCombatLogEntry(CombatLogEntry entry) {
+        if (!entry.hasType()) {
+            return false;
+        }
+        return switch (entry.getType().name()) {
+            case "DOTA_COMBATLOG_PURCHASE",
+                 "DOTA_COMBATLOG_DEATH",
+                 "DOTA_COMBATLOG_FIRST_BLOOD",
+                 "DOTA_COMBATLOG_TEAM_BUILDING_KILL",
+                 "DOTA_COMBATLOG_BUYBACK",
+                 "DOTA_COMBATLOG_GAME_STATE" -> true;
+            default -> false;
+        };
     }
 
     private Map<String, Object> scoreboardRowS2(int idx) {
@@ -361,7 +415,7 @@ public class FullDemoDump implements AutoCloseable {
                 || name.contains("DOTAUserMessages$CDOTAUserMsg_ProjectionEvent");
     }
 
-    private static void writeSummary(String demoPath, Path path) throws IOException {
+    static void writeSummary(String demoPath, Path path) throws IOException {
         var header = Clarity.headerForFile(demoPath);
         var info = Clarity.infoForFile(demoPath);
         var values = new LinkedHashMap<String, Object>();
@@ -490,8 +544,14 @@ public class FullDemoDump implements AutoCloseable {
     @Override
     public void close() throws IOException {
         combatLog.close();
-        gameEvents.close();
-        chat.close();
-        userMessages.close();
+        if (gameEvents != null) {
+            gameEvents.close();
+        }
+        if (chat != null) {
+            chat.close();
+        }
+        if (userMessages != null) {
+            userMessages.close();
+        }
     }
 }

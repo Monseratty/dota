@@ -1,0 +1,20 @@
+{
+  "storagePath": "/app/storage",
+  "inboxPath": "/app/storage/inbox",
+  "rawDemoPath": "/app/storage/demos/raw",
+  "tempDemoPath": "/app/storage/tmp",
+  "parsedPath": "/app/storage/parsed",
+  "failedPath": "/app/storage/failed",
+  "parserLogPath": "/app/storage/logs/parser",
+  "databasePath": "/app/data/app.db",
+  "scanIntervalSeconds": 10,
+  "fileStableCheckSeconds": 5,
+  "parserConcurrency": 1,
+  "keepRawDemos": true,
+  "autoDeleteRawAfterDays": null,
+  "apiPort": 4300,
+  "webPort": 5173,
+  "replayStorage": {
+    "driver": "s3"
+  }
+}

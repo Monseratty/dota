@@ -1,0 +1,378 @@
+.matchTable {
+  display: grid;
+  gap: 12px;
+  min-width: 760px;
+  padding: 10px;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(42, 170, 255, 0.1), transparent 32%),
+    radial-gradient(circle at 86% 12%, rgba(255, 94, 42, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(8, 12, 17, 0.62), rgba(3, 6, 8, 0.72));
+}
+
+.matchRow {
+  position: relative;
+  isolation: isolate;
+  min-height: 104px;
+  margin: 0;
+  padding: 18px 18px 18px 20px;
+  overflow: hidden;
+  border: 1px solid rgba(139, 157, 176, 0.18);
+  border-radius: 14px;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 22%),
+    radial-gradient(circle at 84% 18%, rgba(42, 170, 255, 0.09), transparent 30%),
+    linear-gradient(180deg, rgba(15, 22, 30, 0.94), rgba(5, 8, 12, 0.96));
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.48);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.matchRow::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: 13px;
+  background:
+    linear-gradient(90deg, rgba(255, 94, 42, 0.18), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), transparent 42%);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.matchRow::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  bottom: 14px;
+  width: 1px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.matchRow:hover:not(.head) {
+  border-color: rgba(213, 166, 77, 0.38);
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.095), transparent 24%),
+    radial-gradient(circle at 84% 18%, rgba(42, 170, 255, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(18, 27, 37, 0.98), rgba(6, 10, 15, 0.98));
+  box-shadow:
+    0 24px 54px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(213, 166, 77, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.52);
+  transform: translateY(-2px);
+}
+
+.matchRow.head {
+  min-height: 42px;
+  padding: 0 18px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(200, 210, 221, 0.58);
+}
+
+.matchRow.head::before,
+.matchRow.head::after {
+  display: none;
+}
+
+.matchRow.ready.radiantWin {
+  border-color: rgba(53, 184, 120, 0.26);
+  background:
+    radial-gradient(circle at 3% 50%, rgba(53, 184, 120, 0.32), transparent 24%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.075), transparent 22%),
+    radial-gradient(circle at 84% 18%, rgba(42, 170, 255, 0.09), transparent 30%),
+    linear-gradient(180deg, rgba(14, 24, 22, 0.96), rgba(5, 8, 12, 0.96));
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    0 0 34px rgba(53, 184, 120, 0.09),
+    inset 4px 0 0 rgba(53, 184, 120, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.matchRow.ready.direWin {
+  border-color: rgba(216, 91, 91, 0.28);
+  background:
+    radial-gradient(circle at 3% 50%, rgba(216, 91, 91, 0.34), transparent 24%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.075), transparent 22%),
+    radial-gradient(circle at 84% 18%, rgba(255, 94, 42, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(28, 15, 17, 0.96), rgba(5, 8, 12, 0.96));
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    0 0 34px rgba(216, 91, 91, 0.1),
+    inset 4px 0 0 rgba(216, 91, 91, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.matchRow.parsing {
+  border-color: rgba(42, 170, 255, 0.28);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.32),
+    0 0 30px rgba(42, 170, 255, 0.08),
+    inset 4px 0 0 rgba(42, 170, 255, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.matchRow.failed {
+  border-color: rgba(255, 140, 140, 0.3);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.32),
+    0 0 30px rgba(255, 140, 140, 0.08),
+    inset 4px 0 0 rgba(255, 140, 140, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.matchIdentity {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.matchIdentity strong {
+  color: #f7fbff;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-shadow: 0 0 24px rgba(42, 170, 255, 0.14);
+}
+
+.matchIdentity small {
+  margin-top: 0;
+  color: rgba(200, 210, 221, 0.68);
+}
+
+.heroPortraitStrip {
+  gap: 6px;
+  min-height: 34px;
+  margin-top: 0;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(139, 157, 176, 0.14);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)),
+    rgba(3, 6, 8, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.heroPortraitStrip.empty {
+  width: fit-content;
+  min-height: 30px;
+  padding: 7px 10px;
+  color: rgba(200, 210, 221, 0.48);
+  font-weight: 800;
+}
+
+.matchTags {
+  gap: 6px;
+  margin-top: 0;
+}
+
+.matchTags button {
+  min-height: 24px;
+  max-width: 150px;
+  padding: 0 9px;
+  border-color: rgba(139, 157, 176, 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.012)),
+    rgba(12, 18, 25, 0.82);
+  color: rgba(216, 224, 232, 0.72);
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.matchTags button:hover {
+  border-color: rgba(213, 166, 77, 0.42);
+  color: #f7fbff;
+  background:
+    linear-gradient(180deg, rgba(213, 166, 77, 0.13), rgba(213, 166, 77, 0.035)),
+    rgba(12, 18, 25, 0.9);
+}
+
+.matchTags button.pro {
+  border-color: rgba(213, 166, 77, 0.42);
+  background:
+    linear-gradient(180deg, rgba(213, 166, 77, 0.19), rgba(213, 166, 77, 0.06)),
+    rgba(12, 18, 25, 0.9);
+  color: #f3d9a3;
+  box-shadow:
+    0 0 18px rgba(213, 166, 77, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.resultBadge {
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(3, 6, 8, 0.78);
+  color: #f3d9a3;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.resultBadge.radiant {
+  border-color: rgba(53, 184, 120, 0.5);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(53, 184, 120, 0.28), transparent 68%),
+    rgba(5, 18, 14, 0.86);
+  color: #baf4d4;
+  box-shadow:
+    0 0 28px rgba(53, 184, 120, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.resultBadge.dire {
+  border-color: rgba(216, 91, 91, 0.5);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(216, 91, 91, 0.3), transparent 68%),
+    rgba(24, 8, 10, 0.88);
+  color: #ffd0d0;
+  box-shadow:
+    0 0 28px rgba(216, 91, 91, 0.2),
+    0 10px 22px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.rowTextButton {
+  min-height: 36px;
+  padding: 0 13px;
+  border-color: rgba(139, 157, 176, 0.22);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.014)),
+    rgba(6, 10, 14, 0.84);
+  color: rgba(230, 236, 242, 0.82);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.rowTextButton.accent {
+  border-color: rgba(213, 166, 77, 0.52);
+  background:
+    linear-gradient(180deg, rgba(213, 166, 77, 0.28), rgba(213, 166, 77, 0.075)),
+    rgba(6, 10, 14, 0.88);
+  color: #f3d9a3;
+  box-shadow:
+    0 0 24px rgba(213, 166, 77, 0.1),
+    0 10px 22px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.rowTextButton:hover {
+  border-color: rgba(213, 166, 77, 0.56);
+  background:
+    linear-gradient(180deg, rgba(213, 166, 77, 0.18), rgba(213, 166, 77, 0.045)),
+    rgba(10, 15, 21, 0.94);
+  color: #f7fbff;
+  box-shadow:
+    0 14px 26px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(213, 166, 77, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 900px) {
+  .matchTable {
+    gap: 10px;
+    min-width: 0;
+    padding: 6px 0;
+    background: transparent;
+  }
+
+  .matchRow {
+    min-height: 0;
+    margin: 0;
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .matchRow::after {
+    top: auto;
+    right: 15px;
+    bottom: 0;
+    left: 15px;
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  }
+
+  .matchRow > [data-label] {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .heroPortraitStrip {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .heroPortraitStrip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .matchTags button {
+    max-width: 120px;
+  }
+
+  .rowTextButton {
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 560px) {
+  .matchRow {
+    padding: 14px;
+    border-radius: 11px;
+  }
+
+  .matchRow > [data-label] {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .matchIdentity strong {
+    font-size: 15px;
+  }
+
+  .resultBadge {
+    min-height: 30px;
+    font-size: 12px;
+  }
+
+  .rowTextButton {
+    padding: 0 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matchRow,
+  .rowTextButton {
+    transition: none;
+  }
+
+  .matchRow:hover:not(.head),
+  .rowTextButton:hover {
+    transform: none;
+  }
+}

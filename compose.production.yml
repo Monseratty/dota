@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      context: .
+      target: app
+      args:
+        VITE_API_BASE: /
+    image: dota-replay-app:local
+    command: npm --workspace apps/api run start
+    env_file:
+      - .env
+    volumes:
+      - ./config.production.json:/app/config.json:ro
+      - ./data:/app/data
+      - ./storage:/app/storage
+    restart: unless-stopped
+    expose:
+      - "4300"
+
+  worker:
+    image: dota-replay-app:local
+    command: npm --workspace apps/worker run start
+    env_file:
+      - .env
+    volumes:
+      - ./config.production.json:/app/config.json:ro
+      - ./data:/app/data
+      - ./storage:/app/storage
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        VITE_API_BASE: /
+    image: dota-replay-web:local
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+    depends_on:
+      - api

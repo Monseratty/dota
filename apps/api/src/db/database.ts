@@ -99,4 +99,17 @@ function migrate(db: Db): void {
     CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
     CREATE INDEX IF NOT EXISTS idx_parse_jobs_status ON parse_jobs(status);
   `);
+
+  ensureColumn(db, "matches", "raw_storage_driver", "TEXT NOT NULL DEFAULT 'local'");
+  ensureColumn(db, "matches", "raw_storage_key", "TEXT");
+  ensureColumn(db, "matches", "raw_uploaded_at", "TEXT");
+  ensureColumn(db, "matches", "raw_upload_error", "TEXT");
+}
+
+function ensureColumn(db: Db, table: string, column: string, definition: string): void {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (columns.some((row) => row.name === column)) {
+    return;
+  }
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }

@@ -30,7 +30,7 @@ export class RawDemoCleanup {
     let deleted = 0;
 
     for (const match of candidates) {
-      this.storage.deleteRawFile(match.rawFilePath);
+      await this.storage.deleteRawFile(match.rawFilePath, match.rawStorageKey);
       this.matches.markRawDeleted(match.id, `auto:${this.config.autoDeleteRawAfterDays}d`);
       deleted += 1;
     }
