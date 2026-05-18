@@ -98,6 +98,10 @@ function migrate(db: Db): void {
 
     CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
     CREATE INDEX IF NOT EXISTS idx_parse_jobs_status ON parse_jobs(status);
+    CREATE INDEX IF NOT EXISTS idx_players_match_id ON players(match_id);
+    CREATE INDEX IF NOT EXISTS idx_players_hero_name ON players(hero_name);
+    CREATE INDEX IF NOT EXISTS idx_player_items_player_id ON player_items(player_id);
+    CREATE INDEX IF NOT EXISTS idx_player_abilities_player_id ON player_abilities(player_id);
   `);
 
   ensureColumn(db, "matches", "raw_storage_driver", "TEXT NOT NULL DEFAULT 'local'");

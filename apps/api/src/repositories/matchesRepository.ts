@@ -10,6 +10,24 @@ interface CreateMatchInput {
   rawUploadedAt?: string | null;
 }
 
+export interface HeroAppearanceRow {
+  match: any;
+  player: {
+    index: number | null;
+    displayName: string | null;
+    proName: string | null;
+    heroName: string | null;
+    team: number | null;
+    kills: number | null;
+    deaths: number | null;
+    assists: number | null;
+    netWorth: number | null;
+    gold: number | null;
+  };
+  heroKey: string;
+  won: boolean;
+}
+
 export class MatchesRepository {
   constructor(private readonly db: Db, private readonly hasDashboard?: (id: number) => boolean) {}
 
@@ -115,6 +133,70 @@ export class MatchesRepository {
 
   findBySourceFilename(sourceFilename: string) {
     return this.db.prepare("SELECT * FROM matches WHERE source_filename = ? AND status != 'deleted'").get(sourceFilename);
+  }
+
+  listHeroAppearances(heroKey?: string): HeroAppearanceRow[] {
+    const rows = this.db.prepare(`
+      SELECT
+        matches.id,
+        matches.match_id AS matchId,
+        matches.source_filename AS sourceFilename,
+        matches.raw_file_path AS rawFilePath,
+        matches.file_size AS fileSize,
+        matches.duration,
+        matches.radiant_score AS radiantScore,
+        matches.dire_score AS direScore,
+        matches.winner,
+        matches.status,
+        matches.discovered_at AS discoveredAt,
+        matches.queued_at AS queuedAt,
+        matches.parsed_at AS parsedAt,
+        matches.error_message AS errorMessage,
+        matches.raw_deleted_at AS rawDeletedAt,
+        matches.raw_delete_reason AS rawDeleteReason,
+        matches.raw_storage_driver AS rawStorageDriver,
+        matches.raw_storage_key AS rawStorageKey,
+        matches.raw_uploaded_at AS rawUploadedAt,
+        matches.raw_upload_error AS rawUploadError,
+        players.slot AS playerIndex,
+        players.display_name AS displayName,
+        players.pro_name AS proName,
+        players.hero_name AS heroName,
+        players.team,
+        players.kills,
+        players.deaths,
+        players.assists,
+        players.net_worth AS netWorth
+      FROM players
+      JOIN matches ON matches.id = players.match_id
+      WHERE matches.status = 'ready'
+        AND matches.status != 'deleted'
+      ORDER BY COALESCE(matches.parsed_at, matches.discovered_at) DESC, matches.id DESC, players.team ASC, players.slot ASC
+    `).all() as any[];
+
+    const normalizedFilter = heroKey ? normalizeHeroKey(heroKey) : null;
+    return rows
+      .map((row) => {
+        const normalizedHero = normalizeHeroKey(row.heroName);
+        return {
+          match: toRuntimeMatch(row),
+          player: {
+            index: nullableNumber(row.playerIndex),
+            displayName: row.displayName ?? null,
+            proName: row.proName ?? null,
+            heroName: row.heroName ?? null,
+            team: nullableNumber(row.team),
+            kills: nullableNumber(row.kills),
+            deaths: nullableNumber(row.deaths),
+            assists: nullableNumber(row.assists),
+            netWorth: nullableNumber(row.netWorth),
+            gold: nullableNumber(row.netWorth)
+          },
+          heroKey: normalizedHero,
+          won: winnerToTeam(row.winner) != null && Number(row.team) === winnerToTeam(row.winner)
+        };
+      })
+      .filter((row) => row.heroKey && (!normalizedFilter || row.heroKey === normalizedFilter));
   }
 
   createQueued(input: CreateMatchInput): number {
@@ -242,6 +324,92 @@ export class MatchesRepository {
       };
     });
   }
+}
+
+function toRuntimeMatch(row: any) {
+  const hasRemoteRawDemo = Boolean(row.rawStorageKey && !row.rawDeletedAt);
+  const hasLocalRawDemo = Boolean(row.rawFilePath && !row.rawDeletedAt);
+  const hasRawDemo = hasRemoteRawDemo || hasLocalRawDemo;
+  return {
+    id: row.id,
+    matchId: row.matchId,
+    sourceFilename: row.sourceFilename,
+    rawFilePath: row.rawFilePath,
+    fileSize: row.fileSize,
+    duration: row.duration,
+    radiantScore: row.radiantScore,
+    direScore: row.direScore,
+    winner: row.winner,
+    status: row.status,
+    discoveredAt: row.discoveredAt,
+    queuedAt: row.queuedAt,
+    parsedAt: row.parsedAt,
+    errorMessage: row.errorMessage,
+    hasRawDemo,
+    hasLocalRawDemo,
+    hasRemoteRawDemo,
+    rawDemoSize: hasRawDemo ? row.fileSize : null,
+    rawStorageDriver: row.rawStorageDriver,
+    rawStorageKey: row.rawStorageKey,
+    rawUploadedAt: row.rawUploadedAt,
+    rawUploadError: row.rawUploadError,
+    downloadUrl: hasRawDemo ? `/api/matches/${row.id}/download` : null,
+    dashboardReady: true,
+    heroes: [],
+    proPlayers: []
+  };
+}
+
+function nullableNumber(value: unknown): number | null {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function winnerToTeam(winner: string | null | undefined): number | null {
+  const normalized = String(winner || "").toLowerCase();
+  if (normalized === "radiant" || normalized === "2") {
+    return 2;
+  }
+  if (normalized === "dire" || normalized === "3") {
+    return 3;
+  }
+  return null;
+}
+
+function normalizeHeroKey(value: unknown): string {
+  const normalized = String(value || "")
+    .replace(/^npc_dota_hero_/, "")
+    .replace(/_/g, " ")
+    .replace(/[’']/g, "")
+    .trim()
+    .toLowerCase();
+  const aliases: Record<string, string> = {
+    "abyssal underlord": "abyssal_underlord",
+    "anti mage": "antimage",
+    "anti-mage": "antimage",
+    "clockwerk": "rattletrap",
+    "doom": "doom_bringer",
+    "doom bringer": "doom_bringer",
+    "io": "wisp",
+    "lifestealer": "life_stealer",
+    "life stealer": "life_stealer",
+    "magnus": "magnataur",
+    "natures prophet": "furion",
+    "nature prophet": "furion",
+    "nature's prophet": "furion",
+    "necrophos": "necrolyte",
+    "outworld destroyer": "obsidian_destroyer",
+    "queen of pain": "queenofpain",
+    "shadow fiend": "nevermore",
+    "timbersaw": "shredder",
+    "treant protector": "treant",
+    "underlord": "abyssal_underlord",
+    "vengeful spirit": "vengefulspirit",
+    "windranger": "windrunner",
+    "wraith king": "skeleton_king",
+    "zeus": "zuus"
+  };
+  return aliases[normalized] || normalized.replace(/\s+/g, "_");
 }
 
 function withRuntimeStatus(row: any, hasDashboard?: (id: number) => boolean) {

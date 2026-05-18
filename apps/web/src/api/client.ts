@@ -120,6 +120,26 @@ export interface HeroBuildAnalytics {
   commonItems: HeroCommonItem[];
 }
 
+export interface HeroStatsRow {
+  match: MatchListItem;
+  player: any;
+  won: boolean;
+}
+
+export interface HeroStatsOverview {
+  heroKey: string;
+  matches: number;
+  wins: number;
+  losses: number;
+  winRate: number | null;
+  avgKills: number | null;
+  avgDeaths: number | null;
+  avgAssists: number | null;
+  avgNetWorth: number | null;
+  lastMatch: MatchListItem | null;
+  rows?: HeroStatsRow[];
+}
+
 export async function getStorageInfo(): Promise<StorageInfo> {
   return request<StorageInfo>("/api/system/storage");
 }
@@ -145,6 +165,16 @@ export async function getDashboard(id: string): Promise<any> {
 export async function getHeroBuildAnalytics(heroKey: string): Promise<HeroBuildAnalytics> {
   const data = await request<{ analytics: HeroBuildAnalytics }>(`/api/heroes/${encodeURIComponent(heroKey)}/analytics`);
   return data.analytics;
+}
+
+export async function getHeroStatsIndex(): Promise<HeroStatsOverview[]> {
+  const data = await request<{ stats: HeroStatsOverview[] }>("/api/heroes/stats");
+  return data.stats;
+}
+
+export async function getHeroStats(heroKey: string): Promise<HeroStatsOverview> {
+  const data = await request<{ stats: HeroStatsOverview }>(`/api/heroes/${encodeURIComponent(heroKey)}/stats`);
+  return data.stats;
 }
 
 export async function getJobs(): Promise<ParseJob[]> {

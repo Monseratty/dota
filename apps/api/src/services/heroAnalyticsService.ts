@@ -37,11 +37,26 @@ export interface HeroBuildAnalytics {
   commonItems: CommonItem[];
 }
 
+export interface HeroStatsOverview {
+  heroKey: string;
+  matches: number;
+  wins: number;
+  losses: number;
+  winRate: number | null;
+  avgKills: number | null;
+  avgDeaths: number | null;
+  avgAssists: number | null;
+  avgNetWorth: number | null;
+  lastMatch: any | null;
+  rows?: Array<{ match: any; player: any; won: boolean }>;
+}
+
 interface PatternBucket<T> {
   count: number;
   entries: T[];
 }
 
+const CACHE_TTL_MS = 30_000;
 const STARTING_ITEM_WINDOW_SECONDS = 90;
 const FALLBACK_STARTING_ITEM_WINDOW_SECONDS = 180;
 const MAX_STARTING_ITEMS = 8;
@@ -64,25 +79,55 @@ const ignoredBuildItems = new Set([
 ]);
 
 export class HeroAnalyticsService {
+  private readonly buildCache = new Map<string, { expiresAt: number; value: HeroBuildAnalytics }>();
+  private readonly heroStatsCache = new Map<string, { expiresAt: number; value: HeroStatsOverview }>();
+  private indexCache: { expiresAt: number; value: HeroStatsOverview[] } | null = null;
+
   constructor(
     private readonly matches: MatchesRepository,
     private readonly storage: StorageService
   ) {}
 
+  buildHeroIndexStats(): HeroStatsOverview[] {
+    const now = Date.now();
+    if (this.indexCache && this.indexCache.expiresAt > now) {
+      return this.indexCache.value;
+    }
+
+    const value = summarizeHeroRows(this.matches.listHeroAppearances(), false);
+    this.indexCache = { expiresAt: now + CACHE_TTL_MS, value };
+    return value;
+  }
+
+  buildHeroStats(heroKey: string): HeroStatsOverview {
+    const normalizedHero = normalizeHeroKey(heroKey);
+    const now = Date.now();
+    const cached = this.heroStatsCache.get(normalizedHero);
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
+    }
+
+    const value = summarizeHeroRows(this.matches.listHeroAppearances(normalizedHero), true)[0] || emptyHeroStats(normalizedHero, true);
+    this.heroStatsCache.set(normalizedHero, { expiresAt: now + CACHE_TTL_MS, value });
+    return value;
+  }
+
   buildHeroAnalytics(heroKey: string): HeroBuildAnalytics {
     const normalizedHero = normalizeHeroKey(heroKey);
+    const now = Date.now();
+    const cached = this.buildCache.get(normalizedHero);
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
+    }
+
     const startingPatterns = new Map<string, PatternBucket<BuildEntry>>();
     const itemPatterns = new Map<string, PatternBucket<BuildEntry>>();
     const abilityPatterns = new Map<string, PatternBucket<BuildEntry & { abilityLevel: number | null }>>();
     const commonItems = new Map<string, { key: string; name: string; count: number; totalTime: number; timedCount: number }>();
     let appearances = 0;
 
-    for (const match of this.matches.list()) {
-      if (match.status !== "ready" || !match.dashboardReady) {
-        continue;
-      }
-
-      const dashboard = this.storage.readDashboard(match.id) as any;
+    for (const row of this.matches.listHeroAppearances(normalizedHero)) {
+      const dashboard = this.storage.readDashboard(row.match.id) as any;
       if (!dashboard) {
         continue;
       }
@@ -113,7 +158,7 @@ export class HeroAnalyticsService {
       }
     }
 
-    return {
+    const value = {
       heroKey: normalizedHero,
       appearances,
       startingItems: bestPattern(startingPatterns, appearances, "items"),
@@ -131,7 +176,97 @@ export class HeroAnalyticsService {
         .sort((left, right) => right.count - left.count || Number(left.avgTime ?? 999999) - Number(right.avgTime ?? 999999))
         .slice(0, 12)
     };
+    this.buildCache.set(normalizedHero, { expiresAt: now + CACHE_TTL_MS, value });
+    return value;
   }
+}
+
+function summarizeHeroRows(rows: ReturnType<MatchesRepository["listHeroAppearances"]>, includeRows: boolean): HeroStatsOverview[] {
+  const buckets = new Map<string, HeroStatsOverview & {
+    killTotal: number;
+    deathTotal: number;
+    assistTotal: number;
+    netTotal: number;
+    statCount: number;
+  }>();
+
+  for (const row of rows) {
+    if (!row.heroKey) {
+      continue;
+    }
+
+    const bucket = buckets.get(row.heroKey) || {
+      ...emptyHeroStats(row.heroKey, includeRows),
+      killTotal: 0,
+      deathTotal: 0,
+      assistTotal: 0,
+      netTotal: 0,
+      statCount: 0
+    };
+
+    bucket.matches += 1;
+    bucket.wins += row.won ? 1 : 0;
+    bucket.losses += row.won ? 0 : 1;
+    if (!bucket.lastMatch || timeValue(row.match.parsedAt || row.match.discoveredAt) > timeValue(bucket.lastMatch.parsedAt || bucket.lastMatch.discoveredAt)) {
+      bucket.lastMatch = row.match;
+    }
+
+    const kills = Number(row.player.kills);
+    const deaths = Number(row.player.deaths);
+    const assists = Number(row.player.assists);
+    const netWorth = Number(row.player.netWorth ?? row.player.gold);
+    if ([kills, deaths, assists, netWorth].some(Number.isFinite)) {
+      bucket.killTotal += Number.isFinite(kills) ? kills : 0;
+      bucket.deathTotal += Number.isFinite(deaths) ? deaths : 0;
+      bucket.assistTotal += Number.isFinite(assists) ? assists : 0;
+      bucket.netTotal += Number.isFinite(netWorth) ? netWorth : 0;
+      bucket.statCount += 1;
+    }
+
+    if (includeRows) {
+      bucket.rows?.push({ match: row.match, player: row.player, won: row.won });
+    }
+
+    buckets.set(row.heroKey, bucket);
+  }
+
+  return Array.from(buckets.values()).map((bucket) => ({
+    heroKey: bucket.heroKey,
+    matches: bucket.matches,
+    wins: bucket.wins,
+    losses: bucket.losses,
+    winRate: bucket.matches > 0 ? Math.round((bucket.wins / bucket.matches) * 1000) / 10 : null,
+    avgKills: bucket.statCount > 0 ? roundOne(bucket.killTotal / bucket.statCount) : null,
+    avgDeaths: bucket.statCount > 0 ? roundOne(bucket.deathTotal / bucket.statCount) : null,
+    avgAssists: bucket.statCount > 0 ? roundOne(bucket.assistTotal / bucket.statCount) : null,
+    avgNetWorth: bucket.statCount > 0 ? roundOne(bucket.netTotal / bucket.statCount) : null,
+    lastMatch: bucket.lastMatch,
+    ...(includeRows ? { rows: bucket.rows || [] } : {})
+  }));
+}
+
+function emptyHeroStats(heroKey: string, includeRows: boolean): HeroStatsOverview {
+  return {
+    heroKey,
+    matches: 0,
+    wins: 0,
+    losses: 0,
+    winRate: null,
+    avgKills: null,
+    avgDeaths: null,
+    avgAssists: null,
+    avgNetWorth: null,
+    lastMatch: null,
+    ...(includeRows ? { rows: [] } : {})
+  };
+}
+
+function roundOne(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function timeValue(value: string | null): number {
+  return value ? new Date(value).getTime() : 0;
 }
 
 function heroKeysForPlayer(player: any): string[] {

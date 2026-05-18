@@ -21,6 +21,8 @@ export interface ParticleOptions {
   intervalMs?: number;
   /** 0..1 chance of spawning on each tick. Default 0.85. */
   spawnChance?: number;
+  /** Hard cap for live particle DOM nodes. Default 18. */
+  maxLive?: number;
 }
 
 const defaultCenter = () => ({ x: window.innerWidth - 220, y: 180 });
@@ -29,15 +31,24 @@ const KINDS = ["", "warm", "cold", "dust", "dust", ""];
 
 export function useParticles(options: ParticleOptions = {}) {
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const smallViewport = window.innerWidth < 900;
+    const lowPowerCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+    if (reducedMotion || smallViewport || lowPowerCpu) {
+      return;
+    }
+
     const getCenter = options.getCenter ?? defaultCenter;
     const EVENT_HORIZON = options.horizonRadius ?? 160;
-    const intervalMs = options.intervalMs ?? 280;
-    const spawnChance = options.spawnChance ?? 0.85;
+    const intervalMs = options.intervalMs ?? 950;
+    const spawnChance = options.spawnChance ?? 0.32;
+    const maxLive = options.maxLive ?? 18;
 
     const live: Array<{ el: HTMLSpanElement; timer: number }> = [];
 
     function spawn() {
       if (document.hidden) return;
+      if (live.length >= maxLive) return;
       const c = getCenter();
 
       const edgeBias = Math.random();
@@ -103,5 +114,5 @@ export function useParticles(options: ParticleOptions = {}) {
         el.remove();
       });
     };
-  }, [options.getCenter, options.horizonRadius, options.intervalMs, options.spawnChance]);
+  }, [options.getCenter, options.horizonRadius, options.intervalMs, options.maxLive, options.spawnChance]);
 }

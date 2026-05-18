@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Download, ExternalLink, PackageOpen, Sparkles, Swords, Trophy } from "lucide-react";
-import { downloadUrl, getHeroBuildAnalytics, type HeroAbilityBuildEntry, type HeroBuildAnalytics, type HeroBuildEntry } from "../api/client";
+import { downloadUrl, getHeroBuildAnalytics, getHeroStats, type HeroAbilityBuildEntry, type HeroBuildAnalytics, type HeroBuildEntry } from "../api/client";
 import { HERO_ATTRIBUTE_LABELS, getHeroByKey, getHeroByName, heroImage } from "../lib/heroes";
-import { loadHeroAnalytics } from "../lib/loadHeroAnalytics";
+import { toHeroStats } from "../lib/loadHeroAnalytics";
 import type { HeroStats } from "../lib/heroStats";
 
 export function HeroPage() {
@@ -22,11 +22,11 @@ export function HeroPage() {
 
     setLoading(true);
     Promise.all([
-      loadHeroAnalytics(),
+      getHeroStats(hero.key),
       getHeroBuildAnalytics(hero.key).catch(() => null)
     ])
-      .then(([data, nextBuildAnalytics]) => {
-        setStats(data.stats.get(hero.key) || null);
+      .then(([nextStats, nextBuildAnalytics]) => {
+        setStats(toHeroStats(nextStats));
         setBuildAnalytics(nextBuildAnalytics);
         setError(null);
       })

@@ -47,8 +47,8 @@ export function CosmicBackdrop({ getCenter, hideCrosshairs, scene = "matches" }:
   const sceneCenter = useMemo(() => centerFromScene(scene), [scene]);
   const resolvedCenter = getCenter ?? sceneCenter;
 
-  useGravity({ getCenter: resolvedCenter });
-  useParticles({ getCenter: resolvedCenter });
+  useGravity({ getCenter: resolvedCenter, maxElements: 48 });
+  useParticles({ getCenter: resolvedCenter, intervalMs: 950, spawnChance: 0.32, maxLive: 18 });
 
   useEffect(() => {
     // CSS uses this attribute for the camera preset: same scene, different orbit angle.

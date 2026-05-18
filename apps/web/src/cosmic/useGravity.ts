@@ -28,6 +28,8 @@ export interface GravityOptions {
   getCenter?: () => { x: number; y: number };
   /** Pixel range at which gravity reaches zero. Default 1100. */
   influence?: number;
+  /** Limits layout reads/writes on long match lists. Default 48. */
+  maxElements?: number;
 }
 
 const defaultCenter = () => ({ x: window.innerWidth - 220, y: 180 });
@@ -60,17 +62,29 @@ function writeGravity(el: HTMLElement, state: GravityState) {
 
 export function useGravity(options: GravityOptions = {}) {
   useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const smallViewport = window.innerWidth < 900;
+    const lowPowerCpu = typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4;
+    if (reducedMotion || smallViewport || lowPowerCpu) {
+      return;
+    }
+
     const getCenter = options.getCenter ?? defaultCenter;
     const INFLUENCE = options.influence ?? 1100;
+    const maxElements = options.maxElements ?? 48;
 
     let raf: number | null = null;
     let scrollTimer: number | null = null;
+    let suckables: HTMLElement[] = [];
     const mouse = { x: -9999, y: -9999, active: false };
     const states = new WeakMap<HTMLElement, GravityState>();
 
+    function refreshSuckables() {
+      suckables = Array.from(document.querySelectorAll<HTMLElement>("[data-suck]")).slice(0, maxElements);
+    }
+
     function update() {
       const c = getCenter();
-      const suckables = document.querySelectorAll<HTMLElement>("[data-suck]");
       suckables.forEach((el) => {
         const previous = states.get(el) ?? { tx: 0, ty: 0, skewX: 0, skewY: 0, strength: 0 };
         const r = el.getBoundingClientRect();
@@ -170,11 +184,15 @@ export function useGravity(options: GravityOptions = {}) {
     window.addEventListener("mousemove", handleMove, { passive: true });
     window.addEventListener("mouseleave", handleLeave);
 
+    refreshSuckables();
     update();
     const t1 = window.setTimeout(update, 100);
     const t2 = window.setTimeout(update, 600);
     // Re-scan after DOM updates (route changes, list re-renders)
-    const observer = new MutationObserver(schedule);
+    const observer = new MutationObserver(() => {
+      refreshSuckables();
+      schedule();
+    });
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
@@ -188,5 +206,5 @@ export function useGravity(options: GravityOptions = {}) {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
     };
-  }, [options.getCenter, options.influence]);
+  }, [options.getCenter, options.influence, options.maxElements]);
 }
